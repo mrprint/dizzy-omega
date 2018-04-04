@@ -1,0 +1,21 @@
+{
+    "name": "dizzy_omega",
+    "targetName": "dizzy_omega",
+    "targetType": "executable",
+    "description": "Dizzy Omega - sequal adventure after Dizzy Y",
+    "authors": ["Nikolay (unDEFER) Krivchenkov", "Dmitry (SpyHUNTERrzn) Polyakov"],
+    "homepage": "https://dizzy-omega.sourceforge.io",
+    "license": "GPL-3.0 or later",
+    "libs-posix": ["util"],
+    "dependencies": {
+	    "derelict-sdl2":"~>2.0.0",
+        "derelict-gl3": "~>1.0.7",
+        "derelict-assimp3":"~>1.2.0"
+    },
+    "configurations": [
+	{
+		"name": "default"
+	}
+    ]
+}
+
