@@ -1,6 +1,5 @@
 module unde.games.dizzy.omega.rope;
 
-import derelict.assimp3.assimp;
 import derelict.opengl3.gl;
 
 import std.algorithm;

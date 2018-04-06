@@ -1,6 +1,7 @@
 module unde.games.object;
 
-import derelict.assimp3.assimp;
+import unde.games.obj_loader;
+import unde.games.collision_detector;
 import unde.global_state;
 
 class GameObject
@@ -17,8 +18,8 @@ class GameObject
     protected MainGameObject root;
     long frame;
     ulong state;
-    const (aiScene)*[string] models;
-    aiVector3D[][string][string] collision_objects;
+    const (ObjFile)*[string] models;
+    Vector[][string][string] collision_objects;
 
     this(MainGameObject root_object)
     {

@@ -7,165 +7,64 @@ import std.string;
 import std.stdio;
 
 import derelict.sdl2.image;
+import derelict.sdl2.sdl;
 import derelict.opengl3.gl3;
-import derelict.assimp3.assimp;
 import derelict.opengl3.gl;
 import std.algorithm.comparison;
 
 import std.utf;
 import unde.global_state;
-/* ---------------------------------------------------------------------------- */
-void get_bounding_box_for_node (const (aiScene) *sc,
-    const (aiNode)* nd,
-	aiVector3D* minv,
-	aiVector3D* maxv,
-	aiMatrix4x4* trafo
-){
-	aiMatrix4x4 prev;
-	uint n = 0, t;
-
-	prev = *trafo;
-	aiMultiplyMatrix4(trafo,&nd.mTransformation);
-
-	for (; n < nd.mNumMeshes; ++n) {
-		const (aiMesh)* mesh = sc.mMeshes[nd.mMeshes[n]];
-		for (t = 0; t < mesh.mNumVertices; ++t) {
-
-			aiVector3D tmp = mesh.mVertices[t];
-			aiTransformVecByMatrix4(&tmp,trafo);
-
-			minv.x = min(minv.x,tmp.x);
-			minv.y = min(minv.y,tmp.y);
-			minv.z = min(minv.z,tmp.z);
-
-			maxv.x = max(maxv.x,tmp.x);
-			maxv.y = max(maxv.y,tmp.y);
-			maxv.z = max(maxv.z,tmp.z);
-		}
-	}
-
-	for (n = 0; n < nd.mNumChildren; ++n) {
-		get_bounding_box_for_node(sc, nd.mChildren[n],minv,maxv,trafo);
-	}
-	*trafo = prev;
-}
-
-/* ---------------------------------------------------------------------------- */
-void get_bounding_box (const (aiScene) *sc, aiVector3D* minv, aiVector3D* maxv)
-{
-	aiMatrix4x4 trafo;
-	aiIdentityMatrix4(&trafo);
-
-	minv.x = minv.y = minv.z =  1e10f;
-	maxv.x = maxv.y = maxv.z = -1e10f;
-	get_bounding_box_for_node(sc, sc.mRootNode,minv,maxv,&trafo);
-}
-
-/* ---------------------------------------------------------------------------- */
-void color4_to_float4(const (aiColor4D) *c, ref float[4] f)
-{
-	f[0] = c.r;
-	f[1] = c.g;
-	f[2] = c.b;
-	f[3] = c.a;
-}
-
-/* ---------------------------------------------------------------------------- */
-void set_float4(ref float[4] f, float a, float b, float c, float d)
-{
-	f[0] = a;
-	f[1] = b;
-	f[2] = c;
-	f[3] = d;
-}
+import unde.games.obj_loader;
 
 private GLuint[string] textures;
 
 /* ---------------------------------------------------------------------------- */
-bool apply_material(GlobalState gs, const (aiMaterial) *mtl, string delegate(GlobalState gs, string name) tex_anim = null)
+bool apply_material(GlobalState gs, const (MtlMaterial) *mtl, 
+    string delegate(GlobalState gs, string name) tex_anim = null)
 {
-	float[4] c;
+    float[4] c;
 
-	GLenum fill_mode;
-	int ret1, ret2;
-	aiColor4D diffuse = {0,0,0,0};
-	aiColor4D specular;
-	aiColor4D ambient;
-	aiColor4D emission;
-	float shininess, strength, opacity;
-	int two_sided;
-	int wireframe;
-	uint max;
+    GLenum fill_mode;
+    int ret1, ret2;
+    float opacity = 1.0;
 
-        max = 1;
-	ret1 = aiGetMaterialFloatArray(mtl, AI_MATKEY_OPACITY, 0, 0, &opacity, &max);
-	if(ret1 == aiReturn_SUCCESS) {
-        }
-        else {
-            opacity = 1.0;
-	}
+    if (mtl.transparency) opacity = mtl.transparency;
 
-        set_float4(c, 0.8f, 0.8f, 0.8f, opacity);
-	if(aiReturn_SUCCESS == aiGetMaterialColor(mtl, AI_MATKEY_COLOR_DIFFUSE, 0, 0, &diffuse))
-        {
-            color4_to_float4(&diffuse, c);
-            c[3] = opacity;
-        }
-        else
-            throw new Exception(format("Error while aiGetMaterialColor"));
-	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, cast(const(float)*)c);
+    if (mtl.diffuse[0].isNaN())
+        c = [0.8f, 0.8f, 0.8f, opacity];
+    else
+        c = mtl.diffuse ~ opacity;
+    glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, cast(const(float)*)c);
 
-	set_float4(c, 0.0f, 0.0f, 0.0f, 1.0f);
-	if(aiReturn_SUCCESS == aiGetMaterialColor(mtl, AI_MATKEY_COLOR_SPECULAR, 0, 0, &specular))
-            color4_to_float4(&specular, c);
-	glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, cast(const(float)*)c);
+    //if (mtl.specular[0].isNaN())
+        c = [0.0f, 0.0f, 0.0f, 1.0f];
+    //else
+    //    c = mtl.specular ~ 1.0f;
+    glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, cast(const(float)*)c);
 
-	set_float4(c, 0.2f, 0.2f, 0.2f, 1.0f);
-	if(aiReturn_SUCCESS == aiGetMaterialColor(mtl, AI_MATKEY_COLOR_AMBIENT, 0, 0, &ambient))
-            color4_to_float4(&ambient, c);
-	glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, cast(const(float)*)c);
+    if (mtl.ambient[0].isNaN())
+	c = [0.2f, 0.2f, 0.2f, 1.0f];
+    else
+        c = mtl.ambient ~ 1.0f;
+    glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, cast(const(float)*)c);
 
-	set_float4(c, 0.0f, 0.0f, 0.0f, 1.0f);
-	if(aiReturn_SUCCESS == aiGetMaterialColor(mtl, AI_MATKEY_COLOR_EMISSIVE, 0, 0, &emission))
-            color4_to_float4(&emission, c);
-	glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, cast(const(float)*)c);
+    if (mtl.emissive[0].isNaN())
+        c = [0.0f, 0.0f, 0.0f, 1.0f];
+    else
+        c = mtl.emissive ~ 1.0f;
+    glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, cast(const(float)*)c);
 
-	max = 1;
-	ret1 = aiGetMaterialFloatArray(mtl, AI_MATKEY_SHININESS, 0, 0, &shininess, &max);
-	if(ret1 == aiReturn_SUCCESS) {
-    	    max = 1;
-    	    ret2 = aiGetMaterialFloatArray(mtl, AI_MATKEY_SHININESS_STRENGTH, 0, 0, &strength, &max);
-            if(ret2 == aiReturn_SUCCESS)
-                glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, shininess * strength);
-            else
-                glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, shininess);
-        }
-        else {
-            glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 0.0f);
-            set_float4(c, 0.0f, 0.0f, 0.0f, 0.0f);
-            glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, cast(const(float)*)c);
-	}
+    glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 0.0f);
+    
+    glPolygonMode(GL_FRONT_AND_BACK, false ? GL_LINE : GL_FILL);
 
-	max = 1;
-	if(aiReturn_SUCCESS == aiGetMaterialIntegerArray(mtl, AI_MATKEY_ENABLE_WIREFRAM, 0, 0, &wireframe, &max))
-		fill_mode = wireframe ? GL_LINE : GL_FILL;
-	else
-		fill_mode = GL_FILL;
-	glPolygonMode(GL_FRONT_AND_BACK, fill_mode);
+    //Not Two sided
+	glEnable(GL_CULL_FACE);
 
-	max = 1;
-	if((aiReturn_SUCCESS == aiGetMaterialIntegerArray(mtl, AI_MATKEY_TWOSIDED, 0, 0, &two_sided, &max)) && two_sided)
-		glDisable(GL_CULL_FACE);
-	else
-		glEnable(GL_CULL_FACE);
-
-        
-
-    aiString path;
     bool normals = false;
-    if(aiReturn_SUCCESS == aiGetMaterialTexture(mtl, aiTextureType_DIFFUSE, 0, &path))
+    if(mtl.map_diffuse !is null)
     {
-        string tex_name = (cast(const(char)*)(path.data)).to!(string)();
+        string tex_name = mtl.map_diffuse;
         if (tex_anim) tex_name = tex_anim(gs, tex_name);
         string p = format("models/%s", tex_name);
 
@@ -202,6 +101,7 @@ bool apply_material(GlobalState gs, const (aiMaterial) *mtl, string delegate(Glo
             glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
             glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, image.w, image.h, 0, GL_RGBA, GL_UNSIGNED_BYTE,
                 image.pixels);
+            SDL_FreeSurface(image);
 
             textures[p] = texture_name;
         }
@@ -215,115 +115,110 @@ bool apply_material(GlobalState gs, const (aiMaterial) *mtl, string delegate(Glo
     return false;
 }
 
-GLuint[const (aiMesh)*] gl_lists;
+GLuint[const (ObjMesh)*] gl_lists;
 
 /* ---------------------------------------------------------------------------- */
-void recursive_render (GlobalState gs, const (aiScene) *sc,
+void recursive_render (GlobalState gs, const (ObjFile) *sc,
     bool delegate(GlobalState gs, string name) anim = null,
     string delegate(GlobalState gs, string name) tex_anim = null,
-    bool dontcache = false,
-    const (aiNode)* nd = null)
+    bool dontcache = false, bool reverse = false)
 {
-    if (!nd) nd = sc.mRootNode;
-    uint i;
-    int n = 0, t;
-    GLuint prev_tex_id_idx = 0;
-    
-    glPushMatrix();
-
-    bool draw = true;
-    string name = (cast(const(char)*)(nd.mName.data)).to!(string)();
-    if (anim) draw = anim(gs, name);
-
-    if (draw)
+    foreach(i; 0..sc.objects.length)
     {
-        /* draw all meshes assigned to this node */
-        for (; n < nd.mNumMeshes; n++) {
-            const (aiMesh)* mesh = sc.mMeshes[nd.mMeshes[n]];
+        const(ObjObject) *object;
+        if (!reverse) object = sc.objects[i];
+        else object = sc.objects[sc.objects.length-1-i];
 
-            //writefln("mesh %d. material %d", n, mesh.mMaterialIndex);
-            bool is_texture = apply_material(gs, sc.mMaterials[mesh.mMaterialIndex], tex_anim);
-    
-            if(mesh.mNormals is null) {
-                glDisable(GL_LIGHTING);
-            } else {
-                glEnable(GL_LIGHTING);
-            }
-            
-            glDisable(GL_COLOR_MATERIAL);
-
-            bool full_draw;
-            if (!tex_anim && !dontcache)
-            {
-                if (mesh in gl_lists)
-                {
-                    glCallList(gl_lists[mesh]);
-                }
-                else
-                {
-                    gl_lists[mesh] = glGenLists(1);
-                    if (gl_lists[mesh] <= 0)
-                        throw new Exception(format("Error while glGenLists: %s", gl_lists[mesh]));
-                    glNewList(gl_lists[mesh], GL_COMPILE_AND_EXECUTE);
-                    full_draw = true;
-                }
-            }
-            else full_draw = true;
-    
-            if (full_draw)
-            {
-                for (t = 0; t < mesh.mNumFaces; t++) {
-                    const (aiFace)* face = &mesh.mFaces[t];
-                    GLenum face_mode;
+        GLuint prev_tex_id_idx = 0;
         
-                    switch(face.mNumIndices) {
-                        case 1: face_mode = GL_POINTS; break;
-                        case 2: face_mode = GL_LINES; break;
-                        case 3: face_mode = GL_TRIANGLES; break;
-                        default: face_mode = GL_POLYGON; break;
+        glPushMatrix();
+    
+        bool draw = true;
+        string name = object.name;
+        if (anim) draw = anim(gs, name);
+    
+        if (draw)
+        {
+            /* draw all meshes assigned to this node */
+            foreach (mesh; object.meshes) {
+                //writefln("mesh %d. material %d", n, mesh.mMaterialIndex);
+                bool is_texture = apply_material(gs, sc.mtl.materials[mesh.material], tex_anim);
+        
+                if(object.normals is null) {
+                    glDisable(GL_LIGHTING);
+                } else {
+                    glEnable(GL_LIGHTING);
+                }
+                
+                glDisable(GL_COLOR_MATERIAL);
+    
+                bool full_draw;
+                if (!tex_anim && !dontcache)
+                {
+                    if (mesh in gl_lists)
+                    {
+                        glCallList(gl_lists[mesh]);
                     }
+                    else
+                    {
+                        gl_lists[mesh] = glGenLists(1);
+                        if (gl_lists[mesh] <= 0)
+                            throw new Exception(format("Error while glGenLists: %s", gl_lists[mesh]));
+                        glNewList(gl_lists[mesh], GL_COMPILE_AND_EXECUTE);
+                        full_draw = true;
+                    }
+                }
+                else full_draw = true;
         
-                    glBegin(face_mode);
-        
-                    for(i = 0; i < face.mNumIndices; i++) {
-                        int index = face.mIndices[i];
-                        if(mesh.mColors[0] !is null)
-                                glColor4fv(cast(GLfloat*)&mesh.mColors[0][index]);
+                if (full_draw)
+                {
+                    foreach (face; mesh.faces) {
+                        GLenum face_mode;
             
-                        /*if (t < 5)
-                            glColor4fv([0.0f,1.0f,0.0f,1.0f].ptr);
-                        else
-                            glColor4fv([0.0f,0.0f,0.0f,1.0f].ptr);*/
-        
-                        if (is_texture && mesh.mTextureCoords[0] !is null)
-                            glTexCoord2f(mesh.mTextureCoords[0][index].x, 1.0-mesh.mTextureCoords[0][index].y);
-        
-                        if(mesh.mNormals !is null)
-                        {
-                            float[3] normal = [mesh.mNormals[index].x, -mesh.mNormals[index].y, -mesh.mNormals[index].z];
-                            glNormal3fv(normal.ptr);
+                        switch(face.length) {
+                            case 1: face_mode = GL_POINTS; break;
+                            case 2: face_mode = GL_LINES; break;
+                            case 3: face_mode = GL_TRIANGLES; break;
+                            default: face_mode = GL_POLYGON; break;
                         }
             
-                        float[3] coords = [-mesh.mVertices[index].x, mesh.mVertices[index].y, mesh.mVertices[index].z];
-                        glVertex3fv(coords.ptr);
-                    }
+                        glBegin(face_mode);
+            
+                        foreach(index; face) {
+                            //glColor4fv(0.0f,0.0f,0.0f,1.0f);
+            
+                            if (is_texture && index.tex >= 0)
+                                glTexCoord2f(object.texcoords[index.tex][0], 1.0-object.texcoords[index.tex][1]);
+            
+                            if(index.normal >= 0)
+                            {
+                                float[3] normal = [ object.normals[index.normal][0], 
+                                                   -object.normals[index.normal][1],
+                                                   -object.normals[index.normal][2]];
+                                glNormal3fv(normal.ptr);
+                            }
+
+                            if (index.vert >= 0)
+                            {
+                                float[3] coords = [-object.vertices[index.vert][0],
+                                                    object.vertices[index.vert][1],
+                                                    object.vertices[index.vert][2]];
+                                glVertex3fv(coords.ptr);
+                            }
+                        }
+            
+                        glEnd();
+                     }
+                }
         
-                    glEnd();
-                 }
-            }
-    
-            if (!tex_anim && !dontcache && full_draw)
-            {
-                glEndList();
+                if (!tex_anim && !dontcache && full_draw)
+                {
+                    glEndList();
+                }
             }
         }
-    }
-    
-    glPopMatrix();
-    
-    /* draw all children */
-    for (n = nd.mNumChildren-1; n >= 0; n--) {
-        recursive_render(gs, sc, anim, tex_anim, dontcache, nd.mChildren[n]);
+        
+        glPopMatrix();
     }
 }
 

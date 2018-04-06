@@ -1,8 +1,8 @@
 # Blender MTL File: 'dizzy-z-scene-01.blend'
 # Material Count: 3
 
-newmtl Blanket
-Ns 96.078431
+newmtl Blanket.001
+Ns 94.117647
 Ka 1.000000 1.000000 1.000000
 Kd 0.640000 0.640000 0.640000
 Ks 0.500000 0.500000 0.500000
@@ -13,8 +13,8 @@ illum 2
 map_Kd dizzy/blanket.png
 map_d dizzy/blanket.png
 
-newmtl Steel
-Ns 96.078431
+newmtl Steel.001
+Ns 94.117647
 Ka 1.000000 1.000000 1.000000
 Kd 0.513068 0.640000 0.640000
 Ks 0.500000 0.500000 0.500000
@@ -23,8 +23,8 @@ Ni 1.000000
 d 1.000000
 illum 2
 
-newmtl Wood
-Ns 96.078431
+newmtl Wood.001
+Ns 94.117647
 Ka 1.000000 1.000000 1.000000
 Kd 0.229953 0.044903 0.001943
 Ks 0.500000 0.500000 0.500000

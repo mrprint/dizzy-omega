@@ -1,6 +1,5 @@
 module unde.games.dizzy.omega.dizzy;
 
-import derelict.assimp3.assimp;
 import derelict.opengl3.gl;
 import derelict.sdl2.mixer;
 import std.algorithm;

@@ -9,8 +9,7 @@
     "libs-posix": ["util"],
     "dependencies": {
 	    "derelict-sdl2":"~>2.0.0",
-        "derelict-gl3": "~>1.0.7",
-        "derelict-assimp3":"~>1.2.0"
+        "derelict-gl3": "~>1.0.7"
     },
     "configurations": [
 	{

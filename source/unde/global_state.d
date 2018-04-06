@@ -16,7 +16,6 @@ import derelict.sdl2.sdl;
 import derelict.sdl2.image;
 
 import derelict.opengl3.gl3;
-import derelict.assimp3.assimp;
 import derelict.opengl3.gl;
 import derelict.sdl2.mixer;
 
@@ -136,7 +135,6 @@ class GlobalState
     {
         DerelictGL.load();
         DerelictGL3.load();
-        DerelictASSIMP3.load();
         DerelictGL3.reload();
 
         glEnable(GL_BLEND);
@@ -172,10 +170,6 @@ class GlobalState
         glEnable(GL_NORMALIZE);
 
         glColorMaterial(GL_FRONT_AND_BACK, GL_DIFFUSE);
-
-        aiLogStream stream;
-        stream = aiGetPredefinedLogStream(aiDefaultLogStream_STDOUT, null);
-        aiAttachLogStream(&stream);
     }
 
     void syncTime()

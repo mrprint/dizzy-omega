@@ -83,7 +83,7 @@ class GroundGarden:StaticGameObject
         if (frame < 0 || root.frame - frame < 300)
         {
             dz.collision_objects["solid"]["GroundGarden"] =
-                dz.collision_objects["temp-solid"]["GroundGarden~1"];
+                dz.collision_objects["temp-solid"]["GroundGarden"];
             reset_collision_cache();
         }
         else

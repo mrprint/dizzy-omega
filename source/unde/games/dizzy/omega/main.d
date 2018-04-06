@@ -3,7 +3,6 @@ module unde.games.dizzy.omega.main;
 import derelict.sdl2.mixer;
 import derelict.sdl2.sdl;
 import derelict.opengl3.gl3;
-import derelict.assimp3.assimp;
 import derelict.opengl3.gl;
 
 import std.algorithm.comparison;
@@ -17,6 +16,7 @@ import std.stdio;
 import std.math;
 
 import std.string;
+import core.memory;
 import unde.games.dizzy.omega.animations.bag_bug_anim;
 import unde.games.dizzy.omega.animations.bucket;
 import unde.games.dizzy.omega.animations.drop;
@@ -41,6 +41,7 @@ import unde.games.dizzy.omega.rotatable;
 import unde.games.dizzy.omega.save_load;
 import unde.games.dizzy.omega.star;
 import unde.games.dizzy.omega.tree;
+import unde.games.obj_loader;
 import unde.games.object;
 import unde.games.renderer;
 import unde.games.collision_detector;
@@ -121,7 +122,7 @@ enum TEMP_MESSAGES
 
 class DizzyOmega:MainGameObject
 {
-    const (aiScene)*[10] energy_star;
+    const (ObjFile)*[10] energy_star;
     Item[] items;
     size_t[] inventory;
     GLuint[string] textures;
@@ -232,7 +233,7 @@ class DizzyOmega:MainGameObject
         
         toGame(gs);
         loadingMessage(gs);
-        
+
         foreach(model; ["dizzy", "dizzy-cosmonaut", "kitchen-knife", "blanket",
                         "stone", "bag", "fish-rod", "rocket", "zaks-face",
                         "light-drop", "drop", "branch", "bug",
@@ -255,39 +256,38 @@ class DizzyOmega:MainGameObject
                         "ground-garden", "ground-garden-1", "ground-garden-2",
                         "ground-garden-3",])
         {
-            models[model] = aiImportFile(format("models/%s.obj", model).toStringz(), aiProcessPreset_TargetRealtime_MaxQuality);
+            models[model] = load_objfile(format("models/%s.obj", model));
         }
 
         models["stone1"] = models["stone"];
         models["stone2"] = models["stone"];
         
-        models["scene"] = aiImportFile("models/scene-01.obj", aiProcessPreset_TargetRealtime_MaxQuality);
-        models["solid"] = aiImportFile("models/scene-01-solid.obj", aiProcessPreset_TargetRealtime_MaxQuality);
-        models["water"] = aiImportFile("models/scene-01-water.obj", aiProcessPreset_TargetRealtime_MaxQuality);
-        models["clouds"] = aiImportFile("models/scene-01-clouds.obj", aiProcessPreset_TargetRealtime_MaxQuality);
-        models["dangers"] = aiImportFile("models/scene-01-dangers.obj", aiProcessPreset_TargetRealtime_MaxQuality);
-        models["temp-solid"] = aiImportFile("models/temp-solid.obj", aiProcessPreset_TargetRealtime_MaxQuality);
+        models["scene"] = load_objfile("models/scene-01.obj");
+        models["solid"] = load_objfile("models/scene-01-solid.obj");
+        models["water"] = load_objfile("models/scene-01-water.obj");
+        models["clouds"] = load_objfile("models/scene-01-clouds.obj");
+        models["dangers"] = load_objfile("models/scene-01-dangers.obj");
+        models["temp-solid"] = load_objfile("models/temp-solid.obj");
 
         foreach(i; 0..14)
         {
             models[format("tree-%02d", i)] = 
-                aiImportFile(format("models/mars-tree-%02d.obj", i).toStringz,
-                    aiProcessPreset_TargetRealtime_MaxQuality);
+                load_objfile(format("models/mars-tree-%02d.obj", i));
         }
         
-        models["stone-00"] = aiImportFile("models/stone-00.obj", aiProcessPreset_TargetRealtime_MaxQuality);
-        models["stone-01"] = aiImportFile("models/stone-01.obj", aiProcessPreset_TargetRealtime_MaxQuality);
-        models["stone-02"] = aiImportFile("models/stone-02.obj", aiProcessPreset_TargetRealtime_MaxQuality);
+        models["stone-00"] = load_objfile("models/stone-00.obj");
+        models["stone-01"] = load_objfile("models/stone-01.obj");
+        models["stone-02"] = load_objfile("models/stone-02.obj");
 
-        models["meteorite-01"] = aiImportFile("models/meteorite-01.obj", aiProcessPreset_TargetRealtime_MaxQuality);
-        models["meteorite-02"] = aiImportFile("models/meteorite-02.obj", aiProcessPreset_TargetRealtime_MaxQuality);
-        models["meteorite-03"] = aiImportFile("models/meteorite-03.obj", aiProcessPreset_TargetRealtime_MaxQuality);
+        models["meteorite-01"] = load_objfile("models/meteorite-01.obj");
+        models["meteorite-02"] = load_objfile("models/meteorite-02.obj");
+        models["meteorite-03"] = load_objfile("models/meteorite-03.obj");
         
-        models["small-stone-00"] = aiImportFile("models/small-stone-00.obj", aiProcessPreset_TargetRealtime_MaxQuality);
+        models["small-stone-00"] = load_objfile("models/small-stone-00.obj");
         
         for (int i=0; i < 10; i++)
         {
-            models["star-"~i.to!(string)] = aiImportFile(("models/energy-star-"~i.to!(string)~".obj").toStringz(), aiProcessPreset_TargetRealtime_MaxQuality);
+            models["star-"~i.to!(string)] = load_objfile(("models/energy-star-"~i.to!(string)~".obj"));
         }
 
         collision_objects["solid"] = null;
@@ -301,7 +301,7 @@ class DizzyOmega:MainGameObject
         collision_objects["temp-solid"] = null;
         scene_to_collision_object (models["temp-solid"], collision_objects["temp-solid"]);
 
-        models["bug-solid"] = aiImportFile("models/bug-collisions.obj", aiProcessPreset_TargetRealtime_MaxQuality);
+        models["bug-solid"] = load_objfile("models/bug-collisions.obj");
         collision_objects["bug-solid"] = null;
         scene_to_collision_object (models["bug-solid"], collision_objects["bug-solid"]);
 
@@ -310,7 +310,7 @@ class DizzyOmega:MainGameObject
         collision_objects["solid"]["Platform2"] = collision_objects["temp-solid"]["Platform2"];
         collision_objects["solid"]["BeforeExplosure1"] = collision_objects["temp-solid"]["BeforeExplosure1"];
         collision_objects["solid"]["BeforeExplosure2"] = collision_objects["temp-solid"]["BeforeExplosure2"];
-        collision_objects["solid"]["GroundGarden"] = collision_objects["temp-solid"]["GroundGarden~1"];
+        collision_objects["solid"]["GroundGarden"] = collision_objects["temp-solid"]["GroundGarden"];
         collision_objects["solid"]["Stone2"] = collision_objects["temp-solid"]["Stone2"];
 
         items = [new Item(this, [93.7, -4.9, 0.0], "kitchen-knife"),
@@ -550,8 +550,11 @@ class DizzyOmega:MainGameObject
         if (scene_list <= 0)
             throw new Exception(format("Error while glGenLists: %s", scene_list));
         glNewList(scene_list, GL_COMPILE);
-        recursive_render(gs, models["scene"], null, null, true);
+        recursive_render(gs, models["scene"], null, null, true, true);
         glEndList();
+
+        models["scene"] = null;
+        GC.collect();
 
         energy_minus = Mix_LoadMUS("sounds/energy-minus.ogg");
         if(!energy_minus) {

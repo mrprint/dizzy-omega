@@ -79,7 +79,7 @@ private int get_index(char[] str)
 
 private ObjIndex* get_indices(char[] str, int[3] offsets)
 {
-    int[] numbers = str.split("/").map!(a => a.get_index())().array;
+    int[] numbers = str.splitter("/").map!(a => a.get_index())().array;
     if (numbers.length < 1) numbers ~= -1;
     if (numbers.length < 2) numbers ~= -1;
     if (numbers.length < 3) numbers ~= -1;
@@ -89,7 +89,7 @@ private ObjIndex* get_indices(char[] str, int[3] offsets)
 
 private ObjIndex*[] get_face(char[] str, int[3] offsets)
 {
-    return str.split(" ").map!(a => a.get_indices(offsets))().array[0..$];
+    return str.splitter(" ").map!(a => a.get_indices(offsets))().array[0..$];
 }
 
 MtlFile *load_mtlfile(string filename)
@@ -98,7 +98,7 @@ MtlFile *load_mtlfile(string filename)
     mtl.filename = filename;
 
     string mat;
-    
+
     auto file = File(filename);
     foreach (line; file.byLine())
     {
@@ -236,7 +236,7 @@ ObjFile *load_objfile(string filename)
             
             if (mtlfile !in mtl_files)
             {
-                    mtl_files[mtlfile] = load_mtlfile(mtlfile);
+                mtl_files[mtlfile] = load_mtlfile(mtlfile);
             }
             
             obj.mtl = mtl_files[mtlfile];

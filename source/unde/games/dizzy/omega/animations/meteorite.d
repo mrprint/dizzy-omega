@@ -1,6 +1,5 @@
 module unde.games.dizzy.omega.animations.meteorite;
 
-import derelict.assimp3.assimp;
 import derelict.opengl3.gl;
 import std.format;
 import std.random;
@@ -17,11 +16,11 @@ class Meteorite:StaticGameObject
     Dizzy the_hero;
     Random rnd;
 
-    aiVector3D start_pos, end_pos;
+    Vector start_pos, end_pos;
     int number = 1;
     float scale;
     float rotation_speed;
-    aiVector3D rotation_vector;
+    Vector rotation_vector;
 
     this(MainGameObject root, Dizzy hero, Random _rnd)
     {

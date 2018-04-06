@@ -7,8 +7,7 @@ import std.string;
 import std.stdio;
 import std.algorithm.comparison;
 
-import derelict.assimp3.assimp;
-
+import unde.games.obj_loader;
 enum Intersect
 {
     No = 0,
@@ -17,47 +16,50 @@ enum Intersect
     In = 3
 }
 
-void scene_to_collision_object (const (aiScene) *sc, ref aiVector3D[][string] output, const (aiNode)* nd = null)
+struct Vector
 {
-    if (!nd) nd = sc.mRootNode;
-    uint i;
-    uint n = 0, t;
+    float x,y,z;
+}
 
-    string name = (cast(const(char)*)(nd.mName.data)).to!(string)();
-    Intersect intersect = Intersect.No;
-
-    for (; n < nd.mNumMeshes; n++) {
-        const (aiMesh)* mesh = sc.mMeshes[nd.mMeshes[n]];
+void scene_to_collision_object (const (ObjFile) *sc, ref Vector[][string] output)
+{
+    foreach (object; sc.objects)
+    {
+        uint i;
+        uint n = 0, t;
         
-        auto vertices = mesh.mVertices[0..mesh.mNumVertices].dup();
+        string name = object.name;
+        Intersect intersect = Intersect.No;
+        
+        Vector[] vertices;
         typeof(vertices) new_vertices;
-
-        foreach (ref v; vertices)
+    
+        foreach (ref v; object.vertices)
         {
-            v.x = -v.x;
+            vertices ~= Vector(-v[0], v[1], v[2]);
         }
-
+    
         //vertices.sort!("a.x < b.x || a.x==b.x && (a.y < b.y || a.y==b.y && a.z < b.z)");
         vertices.sort!("a.x > b.x + 0.001 || abs(a.x-b.x) < 0.001 && (a.y > b.y + 0.001 || abs(a.y-b.y) < 0.001 && a.z > b.z + 0.001)");
-
+    
         for (t = 1; t < vertices.length; t++)
         {
             if (!(abs(vertices[t-1].x-vertices[t].x) < 0.001 && abs(vertices[t-1].y-vertices[t].y) < 0.001 &&
                   abs(vertices[t-1].z-vertices[t].z) < 0.001))
             {
-                new_vertices ~= aiVector3D(
+                new_vertices ~= Vector(
                         vertices[t-1].x,
                         vertices[t-1].y,
                         vertices[t-1].z);
             }
         }
-
-        new_vertices ~= aiVector3D(
+    
+        new_vertices ~= Vector(
                         vertices[$-1].x,
                         vertices[$-1].y,
                         vertices[$-1].z);
         vertices = new_vertices;
-
+    
         bool _join;
         do
         {
@@ -72,7 +74,7 @@ void scene_to_collision_object (const (aiScene) *sc, ref aiVector3D[][string] ou
                         vertices[t-1].x, vertices[t].x,
                         vertices[t-1].y, vertices[t].y,
                         vertices[t-1].z, vertices[t].z, (vertices[t-1].z+vertices[t].z)/2);
-                    new_vertices ~= aiVector3D(
+                    new_vertices ~= Vector(
                         (vertices[t-1].x+vertices[t].x)/2,
                         (vertices[t-1].y+vertices[t].y)/2,
                         (vertices[t-1].z+vertices[t].z)/2);
@@ -86,7 +88,7 @@ void scene_to_collision_object (const (aiScene) *sc, ref aiVector3D[][string] ou
             }
             vertices = new_vertices;
         } while (_join);
-
+    
         for (t = 1; t < new_vertices.length; t++)
         {
             if (abs(new_vertices[t-1].y - new_vertices[t].y) < 0.001)
@@ -97,7 +99,7 @@ void scene_to_collision_object (const (aiScene) *sc, ref aiVector3D[][string] ou
                 t++;
             }
         }
-
+    
         for (t = 1; t < new_vertices.length; t++)
         {
             if (abs(new_vertices[t-1].x - new_vertices[t].x) < 0.001)
@@ -108,16 +110,8 @@ void scene_to_collision_object (const (aiScene) *sc, ref aiVector3D[][string] ou
                 t++;
             }
         }
-
-        if (n == 0)
-            output[name] = new_vertices;
-        else
-            output[name~"~"~n.to!(string)] = new_vertices;
-    }
-            
-    /* draw all children */
-    for (n = 0; n < nd.mNumChildren; ++n) {
-        scene_to_collision_object (sc, output, nd.mChildren[n]);
+    
+        output[name] = new_vertices;
     }
 }
 
@@ -306,7 +300,7 @@ void reset_collision_cache()
     collision_cache = null;
 }
 
-Intersect if_intersect (aiVector3D[][string] co, float[6] box, bool _debug = false)
+Intersect if_intersect (Vector[][string] co, float[6] box, bool _debug = false)
 in
 {
     assert(box[0] < box[3], format("Box x0=%s must be less x1=%s", box[0], box[3]));
@@ -319,7 +313,7 @@ body
 
     Intersect intersect = Intersect.No;
 
-    Intersect check_object(string name, aiVector3D[] object, size_t from, size_t to,
+    Intersect check_object(string name, Vector[] object, size_t from, size_t to,
         void *co, SC *sc)
     {
         Intersect intersect = Intersect.No;
