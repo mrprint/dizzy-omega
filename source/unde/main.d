@@ -4,6 +4,11 @@ import unde.draw;
 import unde.global_state;
 import unde.tick;
 import unde.slash;
+import unde.games.dizzy.omega.main;
+import unde.games.obj_splitter;
+import unde.games.obj_joiner;
+import unde.games.obj_loader;
+import unde.games.obj_writer;
 
 import derelict.sdl2.sdl;
 
@@ -14,24 +19,79 @@ import core.stdc.stdlib;
 
 import core.sys.posix.signal;
 
+void split_scene()
+{
+    writefln("Load scene");
+    auto scene1 = load_objfile("models/scene-01.obj");
+    writefln("Split");
+    auto scenes1 = split_objfile(scene1);
+    writefln("Write scenes");
+    foreach(sc, scene; scenes1)
+    {
+        if (sc in screen_names)
+            save_objfile(scene);
+    }
+
+    writefln("Load scene");
+    auto scene2 = load_objfile("models/scene-02.obj");
+    writefln("Split");
+    auto scenes2 = split_objfile(scene2);
+    writefln("Write scenes");
+    foreach(sc, scene; scenes2)
+    {
+        if (sc in screen_names && (sc !in scenes1 ||
+            scene.objects.length > scenes1[sc].objects.length))
+            save_objfile(scene);
+    }
+
+    writefln("Load solid scenes");
+    auto scene1solid = load_objfile("models/scene-01-solid.obj");
+    auto scene2solid = load_objfile("models/scene-02-solid.obj");
+    writefln("Join");
+    scene1solid.join_objfiles(scene2solid);
+    scene1solid.filename = "models/scene-solid.obj";
+    scene1solid.mtl.filename = "models/scene-solid.mtl";
+    writefln("Write solid scene");
+    save_objfile(scene1solid);
+
+    writefln("Load dangers scenes");
+    auto scene1dangers = load_objfile("models/scene-01-dangers.obj");
+    auto scene2dangers = load_objfile("models/scene-02-dangers.obj");
+    writefln("Join");
+    scene1dangers.join_objfiles(scene2dangers);
+    scene1dangers.filename = "models/scene-dangers.obj";
+    scene1dangers.mtl.filename = "models/scene-dangers.mtl";
+    writefln("Write dangers scene");
+    save_objfile(scene1dangers);
+
+}
+
 extern(C) void mybye(int value){
     exit(1);
 }
 
 int main(string[] args)
 {
-    bool force_recover;
+    bool scene_splitter;
     size_t display;
 
     for (int i=1; i < args.length; i++)
     {
-        if (args[i] == "--force_recover")
-            force_recover = true;
+        if (args[i] == "--scene-splitter")
+        {
+            scene_splitter = true;
+        }
         else if (args[i] == "--display")
             display = args[++i].to!size_t;
     }
 
-    GlobalState gs = new GlobalState(force_recover, display);
+    if (scene_splitter)
+    {
+        split_scene();
+        return 0;
+    }
+
+    GlobalState gs = new GlobalState(false, display);
     version(Posix)
     {
         sigset(SIGINT, &mybye);

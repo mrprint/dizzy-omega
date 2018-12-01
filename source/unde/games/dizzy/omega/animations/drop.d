@@ -1,6 +1,7 @@
 module unde.games.dizzy.omega.animations.drop;
 
 import derelict.opengl3.gl;
+import std.math;
 import unde.games.object;
 import unde.games.renderer;
 import unde.global_state;
@@ -25,6 +26,9 @@ class Drop:StaticGameObject
 
     override void draw(GlobalState gs)
     {
+        if (abs(root.scrx-x) > 32.0 ||
+            abs(root.scry-y) > 18.0) return;
+        
         float f = (root.frame+offset)%500;   
 
         glPushMatrix();

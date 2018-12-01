@@ -87,5 +87,5 @@ class Platform1:StaticGameObject
             string p = "platform1";
             s[p] = frame.to!(string);
         }
-    }    
+    }                    
 }

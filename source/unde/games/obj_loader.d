@@ -3,6 +3,7 @@ module unde.games.obj_loader;
 import std.algorithm;
 import std.array;
 import std.conv;
+import std.exception;
 import std.path;
 import std.stdio;
 
@@ -104,52 +105,52 @@ MtlFile *load_mtlfile(string filename)
     {
         if (line == "" || line[0] == '#')
             continue;
-        else if (line[0..3] == "Ns ")
+        else if (line.startsWith("Ns "))
         {
             mtl.materials[mat].specular_koef = line[3..$].to!(float);
         }
-        else if (line[0..3] == "Ka ")
+        else if (line.startsWith("Ka "))
         {
             mtl.materials[mat].ambient = get_3f(line[3..$]);
         }
-        else if (line[0..3] == "Kd ")
+        else if (line.startsWith("Kd "))
         {
             mtl.materials[mat].diffuse = get_3f(line[3..$]);
         }
-        else if (line[0..3] == "Ks ")
+        else if (line.startsWith("Ks "))
         {
             mtl.materials[mat].specular = get_3f(line[3..$]);
         }
-        else if (line[0..3] == "Ke ")
+        else if (line.startsWith("Ke "))
         {
             mtl.materials[mat].emissive = get_3f(line[3..$]);
         }
-        else if (line[0..3] == "Ni ")
+        else if (line.startsWith("Ni "))
         {
             mtl.materials[mat].optical_density = line[3..$].to!(float);
         }
-        else if (line[0..2] == "d ")
+        else if (line.startsWith("d "))
         {
             mtl.materials[mat].transparency = line[2..$].to!(float);
         }
-        else if (line[0..7] == "map_Kd ")
+        else if (line.startsWith("map_Kd "))
         {
             mtl.materials[mat].map_diffuse = line[7..$].idup();
         }
-        else if (line[0..6] == "map_d ")
+        else if (line.startsWith("map_d "))
         {
             // Just ignore
         }
-        else if (line[0..6] == "illum ")
+        else if (line.startsWith("illum "))
         {
             mtl.materials[mat].illum_model = line[6..$].to!(int);
         }
-        else if (line[0..7] == "newmtl ")
+        else if (line.startsWith("newmtl "))
         {
             mat = line[7..$].idup();
             mtl.materials[mat] = new MtlMaterial;
         }
-        else if (line[0..9] == "map_Bump ")
+        else if (line.startsWith("map_Bump "))
         {
             mtl.materials[mat].map_diffuse = line[9..$].idup();
         }
@@ -168,83 +169,89 @@ ObjFile *load_objfile(string filename)
     obj.filename = filename;
 
     int[3] offsets;
-    
-    auto file = File(filename);
-    foreach (line; file.byLine())
+    try 
     {
-        if (line == "" || line[0] == '#')
-            continue;
-        else if (line[0..2] == "o ")
+        auto file = File(filename);
+        foreach (line; file.byLine())
         {
-            if (obj.objects.length > 0)
+            if (line == "" || line[0] == '#')
+                continue;
+            else if (line.startsWith("o "))
             {
-                offsets[0] += obj.objects[$-1].vertices.length;
-                offsets[1] += obj.objects[$-1].texcoords.length;
-                offsets[2] += obj.objects[$-1].normals.length;
+                if (obj.objects.length > 0)
+                {
+                    offsets[0] += obj.objects[$-1].vertices.length;
+                    offsets[1] += obj.objects[$-1].texcoords.length;
+                    offsets[2] += obj.objects[$-1].normals.length;
+                }
+                
+                obj.objects ~= new ObjObject;
+                obj.objects[$-1].name = line[2..$].idup();
             }
-            
-            obj.objects ~= new ObjObject;
-            obj.objects[$-1].name = line[2..$].idup();
-        }
-        else if (line[0..2] == "v ")
-        {
-            obj.objects[$-1].vertices ~= get_3f(line[2..$]);
-        }
-        else if (line[0..3] == "vt ")
-        {
-            obj.objects[$-1].texcoords ~= get_2f(line[3..$]);
-        }
-        else if (line[0..3] == "vn ")
-        {
-            obj.objects[$-1].normals ~= get_3f(line[3..$]);
-        }
-        else if (line[0..2] == "s ")
-        {
-            string material;
-            bool n = true;
-            if (obj.objects[$-1].meshes.length > 0)
+            else if (line.startsWith("v "))
             {
-                material = obj.objects[$-1].meshes[$-1].material;
-                n = obj.objects[$-1].meshes[$-1].faces.length > 0;
+                obj.objects[$-1].vertices ~= get_3f(line[2..$]);
             }
-            
-            if (n)
+            else if (line.startsWith("vt "))
+            {
+                obj.objects[$-1].texcoords ~= get_2f(line[3..$]);
+            }
+            else if (line.startsWith("vn "))
+            {
+                obj.objects[$-1].normals ~= get_3f(line[3..$]);
+            }
+            else if (line.startsWith("s "))
+            {
+                string material;
+                bool n = true;
+                if (obj.objects[$-1].meshes.length > 0)
+                {
+                    material = obj.objects[$-1].meshes[$-1].material;
+                    n = obj.objects[$-1].meshes[$-1].faces.length > 0;
+                }
+                
+                if (n)
+                {
+                    obj.objects[$-1].meshes ~= new ObjMesh;
+                    obj.objects[$-1].meshes[$-1].material = material;
+                }
+                
+                obj.objects[$-1].meshes[$-1].smooth = (line[2..$] == "1");
+            }
+            else if (line.startsWith("p ") || line.startsWith("l ") || line.startsWith("f "))
+            {
+                obj.objects[$-1].meshes[$-1].faces ~= get_face(line[2..$], offsets);
+            }
+            else if (line.startsWith("usemtl "))
             {
                 obj.objects[$-1].meshes ~= new ObjMesh;
-                obj.objects[$-1].meshes[$-1].material = material;
+                obj.objects[$-1].meshes[$-1].material = line[7..$].idup();
             }
-            
-            obj.objects[$-1].meshes[$-1].smooth = (line[2..$] == "1");
-        }
-        else if (line[0..2] == "p " || line[0..2] == "l " || line[0..2] == "f ")
-        {
-            obj.objects[$-1].meshes[$-1].faces ~= get_face(line[2..$], offsets);
-        }
-        else if (line[0..7] == "usemtl ")
-        {
-            obj.objects[$-1].meshes ~= new ObjMesh;
-            obj.objects[$-1].meshes[$-1].material = line[7..$].idup();
-        }
-        else if (line[0..7] == "mtllib ")
-        {
-            string mtlfile = line[7..$].idup();
-            
-            if (!isAbsolute(mtlfile))
+            else if (line.startsWith("mtllib "))
             {
-                mtlfile = chainPath(dirName(filename), mtlfile).array;
+                string mtlfile = line[7..$].idup();
+                
+                if (!isAbsolute(mtlfile))
+                {
+                    mtlfile = chainPath(dirName(filename), mtlfile).array;
+                }
+                
+                if (mtlfile !in mtl_files)
+                {
+                    mtl_files[mtlfile] = load_mtlfile(mtlfile);
+                }
+                
+                obj.mtl = mtl_files[mtlfile];
             }
-            
-            if (mtlfile !in mtl_files)
+            else
             {
-                mtl_files[mtlfile] = load_mtlfile(mtlfile);
+                throw new Exception("Cannot parse obj line: "~line.idup());
             }
-            
-            obj.mtl = mtl_files[mtlfile];
         }
-        else
-        {
-            throw new Exception("Cannot parse obj line: "~line.idup());
-        }
+    }
+    catch (ErrnoException err)
+    {
+        writefln("%s", err);
     }
 
     return obj;    

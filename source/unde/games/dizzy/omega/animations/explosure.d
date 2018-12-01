@@ -47,6 +47,9 @@ class Explosure:StaticGameObject
 
     override void draw(GlobalState gs)
     {
+        if (abs(root.scrx-x) > 32.0 ||
+            abs(root.scry-y) > 18.0) return;
+            
         DizzyOmega dz = cast(DizzyOmega) root;
 
         glPushMatrix();

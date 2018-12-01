@@ -6,6 +6,7 @@ import std.random;
 import std.stdio;
 import unde.games.collision_detector;
 import unde.games.dizzy.omega.dizzy;
+import unde.games.dizzy.omega.bird;
 import unde.games.dizzy.omega.main;
 import unde.games.object;
 import unde.games.renderer;
@@ -22,7 +23,7 @@ class Meteorite:StaticGameObject
     float rotation_speed;
     Vector rotation_vector;
 
-    this(MainGameObject root, Dizzy hero, Random _rnd)
+    this(MainGameObject root, Dizzy hero, Bird bird, Random _rnd)
     {
         frame = -1;
         the_hero = hero;
@@ -69,6 +70,12 @@ class Meteorite:StaticGameObject
         {
             frame = root.frame - 301;
         }
+
+        if (dz.wait_meteorite2 == 0 &&
+            root.frame < frame)
+        {
+            frame = root.frame - 301;
+        }
         
         if (root.frame > frame + 300)
         {
@@ -99,6 +106,17 @@ class Meteorite:StaticGameObject
                 end_pos.x = the_hero.x + uniform(5.0, 10.0, rnd);
                 scale = 1.0;
             }
+
+            if (dz.wait_meteorite2 == 0)
+            {
+                dz.wait_meteorite2 = 1;
+                frame = root.frame;
+                start_pos.z = 0;
+                end_pos.z = 0;
+                end_pos.x = dz.bird.x;
+                end_pos.y = dz.bird.y;
+                scale = 2.0;
+            }
         }
 
         long mf = root.frame - frame;
@@ -115,8 +133,20 @@ class Meteorite:StaticGameObject
             float z0 = z-0.8*scale;
             float z1 = z+0.8*scale;
 
+            if (dz.wait_meteorite2 == 1)
+            {
+                end_pos.x = dz.bird.x;
+                end_pos.y = dz.bird.y;
+
+                if (mf == 300)
+                {
+                    dz.wait_meteorite2 = 2;
+                    dz.bird.fall();
+                }
+            }
+
             auto mb = if_intersect (collision_objects["solid"], [x0, y0, z0-4.0, x1, y1, z1+4.0]);
-            if (mb > 0)
+            if (dz.wait_meteorite2 != 1 && mb > 0)
             {
                 frame = root.frame - 300;
                 

@@ -145,11 +145,11 @@ class Dialogs:StaticGameObject
 
                 glEnable(GL_COLOR_MATERIAL);
 
-                show_dialback(15, 6);
+                show_dialback(15, 8);
 
                 glBindTexture(GL_TEXTURE_2D, dz.textures["font"]);
                 glBlendFunc(GL_SRC_COLOR, GL_ONE_MINUS_SRC_COLOR);
-                glTranslatef(-5.0, 5.0, 0.0);
+                glTranslatef(-5.0, 7.0, 0.0);
                 glColor4f(1.0, 1.0, 0.0, 1.0);
                 final switch(lang)
                 {
@@ -554,6 +554,81 @@ class Dialogs:StaticGameObject
                 glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
                 break;
 
+            case STATE.BURNED_IN_FLAME:
+                glEnable(GL_COLOR_MATERIAL);
+
+                final switch(lang)
+                {
+                    case dz.LANG.EN:
+                        show_dialback(11, 3);
+        
+                        glBindTexture(GL_TEXTURE_2D, dz.textures["font"]);
+                        glBlendFunc(GL_SRC_COLOR, GL_ONE_MINUS_SRC_COLOR);
+                        glTranslatef(-10.0, 2.0, 0.0);
+                        glColor4f(1.0, 1.0, 1.0, 1.0);
+                        print_text("You burned in flame");
+
+                        glTranslatef(0.0, -3.0, 0.0);
+                        glColor4f(1.0, 0.0, 0.0, 1.0);
+                        print_text("  You lose a life");
+                        break;
+                        
+                    case dz.LANG.RU:
+                        show_dialback(11, 3);
+        
+                        glBindTexture(GL_TEXTURE_2D, dz.textures["font"]);
+                        glBlendFunc(GL_SRC_COLOR, GL_ONE_MINUS_SRC_COLOR);
+                        glTranslatef(-10.0, 2.0, 0.0);
+                        glColor4f(1.0, 1.0, 1.0, 1.0);
+                        print_text("Вы сгорели в пламени");
+
+                        glTranslatef(0.0, -3.0, 0.0);
+                        glColor4f(1.0, 0.0, 0.0, 1.0);
+                        print_text("  Вы теряете жизнь");
+                }
+                
+                glDisable(GL_COLOR_MATERIAL);
+                glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+                break;
+                
+            case STATE.CRUSHED_BY_PRESSURE:
+                glEnable(GL_COLOR_MATERIAL);
+
+                final switch(lang)
+                {
+                    case dz.LANG.EN:
+                        show_dialback(13, 3);
+        
+                        glBindTexture(GL_TEXTURE_2D, dz.textures["font"]);
+                        glBlendFunc(GL_SRC_COLOR, GL_ONE_MINUS_SRC_COLOR);
+                        glTranslatef(-12.0, 2.0, 0.0);
+                        glColor4f(1.0, 1.0, 1.0, 1.0);
+                        print_text("You crushed by pressure");
+
+                        glTranslatef(0.0, -3.0, 0.0);
+                        glColor4f(1.0, 0.0, 0.0, 1.0);
+                        print_text("    You lose a life");
+                        break;
+                        
+                    case dz.LANG.RU:
+                        show_dialback(13, 3);
+        
+                        glBindTexture(GL_TEXTURE_2D, dz.textures["font"]);
+                        glBlendFunc(GL_SRC_COLOR, GL_ONE_MINUS_SRC_COLOR);
+                        glTranslatef(-12.0, 2.0, 0.0);
+                        glColor4f(1.0, 1.0, 1.0, 1.0);
+                        print_text("Вас раздавило давлением");
+
+                        glTranslatef(0.0, -3.0, 0.0);
+                        glColor4f(1.0, 0.0, 0.0, 1.0);
+                        print_text("    Вы теряете жизнь");
+                }
+                
+                glDisable(GL_COLOR_MATERIAL);
+                glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+                break;
+
+
             case STATE.MARTIAN_AGRONOMIST_HELLO:
                 glEnable(GL_COLOR_MATERIAL);
 
@@ -876,6 +951,7 @@ class Dialogs:StaticGameObject
                 glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
                 break;
             case STATE.DIZZY_USED_KNIFE_ANIM:
+            case STATE.THINGS_SWEEP_AWAY_ZAKS_ANIM:
                 break;
 
             case STATE.DIZZY_THROW_BRANCH_MESSAGE:
@@ -884,7 +960,7 @@ class Dialogs:StaticGameObject
                 final switch(lang)
                 {
                     case dz.LANG.EN:
-                        show_dialback(12, 2);
+                        show_dialback(12, 2, 12, 1);
         
                         glBindTexture(GL_TEXTURE_2D, dz.textures["font"]);
                         glBlendFunc(GL_SRC_COLOR, GL_ONE_MINUS_SRC_COLOR);
@@ -895,7 +971,7 @@ class Dialogs:StaticGameObject
                         break;
                         
                     case dz.LANG.RU:
-                        show_dialback(10, 2);
+                        show_dialback(10, 2, 10, 1);
         
                         glBindTexture(GL_TEXTURE_2D, dz.textures["font"]);
                         glBlendFunc(GL_SRC_COLOR, GL_ONE_MINUS_SRC_COLOR);
@@ -1082,6 +1158,7 @@ class Dialogs:StaticGameObject
                 break;
                 
             case STATE.DIZZY_UNTIED_ROPE_MESSAGE:
+            case STATE.DIZZY_UNTIED_SHORT_ROPE_MESSAGE:
                 glEnable(GL_COLOR_MATERIAL);
 
                 final switch(lang)
@@ -1111,6 +1188,42 @@ class Dialogs:StaticGameObject
                 glDisable(GL_COLOR_MATERIAL);
                 glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
                 break;
+
+            case STATE.DIZZY_CATCH_GRASSHOPPER_MESSAGE:
+                glEnable(GL_COLOR_MATERIAL);
+
+                final switch(lang)
+                {
+                    case dz.LANG.EN:
+                        show_dialback(18, 3, 17, 2);
+        
+                        glBindTexture(GL_TEXTURE_2D, dz.textures["font"]);
+                        glBlendFunc(GL_SRC_COLOR, GL_ONE_MINUS_SRC_COLOR);
+                        glTranslatef(-17.0, 2.0, 0.0);
+                        glColor4f(1.0, 1.0, 1.0, 1.0);
+                        //         0    5   10   15   20   25   30
+                        print_text("Having driven a grasshopper into\n"~
+                                   "a pit, Dizzy was able to catch it\n"~
+                                   "     with his bare hands.");
+                        break;
+                        
+                    case dz.LANG.RU:
+                        show_dialback(13, 3, 12, 2);
+        
+                        glBindTexture(GL_TEXTURE_2D, dz.textures["font"]);
+                        glBlendFunc(GL_SRC_COLOR, GL_ONE_MINUS_SRC_COLOR);
+                        glTranslatef(-12.0, 2.0, 0.0);
+                        glColor4f(1.0, 1.0, 1.0, 1.0);
+                        //         0    5   10   15   20   25   30
+                        print_text("Загнав кузнечика в яму,\n"~
+                                   "Диззи смог поймать его\n" ~
+                                   "   голыми руками");
+                }
+                
+                glDisable(GL_COLOR_MATERIAL);
+                glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+                break;
+
 
             case STATE.MARTIAN_CHEMIST_HELLO:
                 glEnable(GL_COLOR_MATERIAL);
@@ -1859,6 +1972,44 @@ class Dialogs:StaticGameObject
                 glDisable(GL_COLOR_MATERIAL);
                 glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
                 break;
+
+            case STATE.MARTIAN_ENGINEER_RETURNS_BUCKET:
+                glEnable(GL_COLOR_MATERIAL);
+
+                final switch(lang)
+                {
+                    case dz.LANG.EN:
+                        show_dialback(14, 3, 21, 3, DIALOG_COLOR.GREEN);
+        
+                        glBindTexture(GL_TEXTURE_2D, dz.textures["font"]);
+                        glBlendFunc(GL_SRC_COLOR, GL_ONE_MINUS_SRC_COLOR);
+                        glTranslatef(-13.0, 2.0, 0.0);
+                        glColor4f(1.0, 1.0, 1.0, 1.0);
+                        //         0    5   10   15   20   25   30
+                        print_text("  Do you need a bucket? Take it,\n"~
+                                   " please. And the chemist told me\n"~
+                                   "about his idea. Come later to me,\n"~
+                                   " I will have something for you.");
+                        break;
+                        
+                    case dz.LANG.RU:
+                        show_dialback(9, 4, 21, 3, DIALOG_COLOR.GREEN);
+        
+                        glBindTexture(GL_TEXTURE_2D, dz.textures["font"]);
+                        glBlendFunc(GL_SRC_COLOR, GL_ONE_MINUS_SRC_COLOR);
+                        glTranslatef(-8.0, 3.0, 0.0);
+                        glColor4f(1.0, 1.0, 1.0, 1.0);
+                        //         0    5   10   15   20   25   30
+                        print_text("  Тебе нужно ведро? Возьми,\n"~
+                                   " пожалуйста. И химик сказал\n"~
+                                   " мне про его задумку. Зайди\n"~
+                                   "позже ко мне. У меня кое-что\n"~
+                                   "      для тебя будет.");
+                }
+                
+                glDisable(GL_COLOR_MATERIAL);
+                glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+                break;
                 
             case STATE.DIZZY_HOLD_BRANCH_UNDER_DROP:
                 glEnable(GL_COLOR_MATERIAL);
@@ -1890,6 +2041,43 @@ class Dialogs:StaticGameObject
                         print_text("  Раз, два, три... Диззи считал\n"~
                                    "капли, падающие на ветку. На счёт\n"~
                                    "      100 ветка засияла.");
+                }
+                
+                glDisable(GL_COLOR_MATERIAL);
+                glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+                break;
+
+            case STATE.DIZZY_OPEN_DOOR:
+                glEnable(GL_COLOR_MATERIAL);
+
+                final switch(lang)
+                {
+                    case dz.LANG.EN:
+                        show_dialback(20, 3);
+        
+                        glBindTexture(GL_TEXTURE_2D, dz.textures["font"]);
+                        glBlendFunc(GL_SRC_COLOR, GL_ONE_MINUS_SRC_COLOR);
+                        glTranslatef(-19.0, 2.0, 0.0);
+                        glColor4f(1.0, 1.0, 1.0, 1.0);
+                        //         0    5   10   15   20   25   30
+                        print_text("Despite the strange shape of the key,\n"~
+                                   "   Dizzy tried to insert it into\n"~
+                                   "  the keyhole. The door opened in\n"~
+                                   "     an incomprehensible way.");
+                        break;
+                        
+                    case dz.LANG.RU:
+                        show_dialback(18, 3, 17, 3);
+        
+                        glBindTexture(GL_TEXTURE_2D, dz.textures["font"]);
+                        glBlendFunc(GL_SRC_COLOR, GL_ONE_MINUS_SRC_COLOR);
+                        glTranslatef(-17.0, 2.0, 0.0);
+                        glColor4f(1.0, 1.0, 1.0, 1.0);
+                        //         0    5   10   15   20   25   30
+                        print_text("Несмотря на странную форму ключа\n"~
+                                   " Диззи попробовал вставить её в\n"~
+                                   "замочную скважину. Непостижимым\n"~
+                                   "   образом дверь отворилась.");
                 }
                 
                 glDisable(GL_COLOR_MATERIAL);
@@ -1933,6 +2121,44 @@ class Dialogs:StaticGameObject
                 glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
                 break;
 
+            case STATE.MARTIAN_ENGINEER_GIVES_WHISTLE:
+                glEnable(GL_COLOR_MATERIAL);
+
+                final switch(lang)
+                {
+                    case dz.LANG.EN:
+                        show_dialback(12, 3, 21, 3, DIALOG_COLOR.GREEN);
+        
+                        glBindTexture(GL_TEXTURE_2D, dz.textures["font"]);
+                        glBlendFunc(GL_SRC_COLOR, GL_ONE_MINUS_SRC_COLOR);
+                        glTranslatef(-11.0, 2.0, 0.0);
+                        glColor4f(1.0, 1.0, 1.0, 1.0);
+                        //         0    5   10   15   20   25   30
+                        print_text(" So, take this whistle, Dizzy.\n"~
+                                   " Take everything you can carry\n"~
+                                   "with you, and go to the wizard,\n"~
+                                   "   find shelter and whistle.");
+                        break;
+                        
+                    case dz.LANG.RU:
+                        show_dialback(16, 3, 21, 3, DIALOG_COLOR.GREEN);
+        
+                        glBindTexture(GL_TEXTURE_2D, dz.textures["font"]);
+                        glBlendFunc(GL_SRC_COLOR, GL_ONE_MINUS_SRC_COLOR);
+                        glTranslatef(-15.0, 2.0, 0.0);
+                        glColor4f(1.0, 1.0, 1.0, 1.0);
+                        //         0    5   10   15   20   25   30
+                        print_text(" Вот, возьми этот свисток, Диззи.\n"~
+                                   "Бери с собой всё что можешь унести,\n"~
+                                   "  и иди к волшебнику, найди себе\n"~
+                                   "         укрытие и свистни.");
+                }
+                                   
+                glDisable(GL_COLOR_MATERIAL);
+                glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+                break;
+
+
             case STATE.DIZZY_DIG_MESSAGE:
                 glEnable(GL_COLOR_MATERIAL);
 
@@ -1958,6 +2184,946 @@ class Dialogs:StaticGameObject
                         glColor4f(1.0, 1.0, 1.0, 1.0);
                         //         0    5   10   15   20   25   30
                         print_text("Диззи начал копать");
+                }
+                
+                glDisable(GL_COLOR_MATERIAL);
+                glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+                break;
+
+            case STATE.DIZZY_PUT_STONE_MESSAGE:
+                glEnable(GL_COLOR_MATERIAL);
+
+                final switch(lang)
+                {
+                    case dz.LANG.EN:
+                        show_dialback(9, 2, 9, 1);
+        
+                        glBindTexture(GL_TEXTURE_2D, dz.textures["font"]);
+                        glBlendFunc(GL_SRC_COLOR, GL_ONE_MINUS_SRC_COLOR);
+                        glTranslatef(-8.0, 1.0, 0.0);
+                        glColor4f(1.0, 1.0, 1.0, 1.0);
+                        //         0    5   10   15   20   25   30
+                        print_text("Dizzy put stone.");
+                        break;
+                        
+                    case dz.LANG.RU:
+                        show_dialback(13, 2, 12, 1);
+        
+                        glBindTexture(GL_TEXTURE_2D, dz.textures["font"]);
+                        glBlendFunc(GL_SRC_COLOR, GL_ONE_MINUS_SRC_COLOR);
+                        glTranslatef(-12.0, 1.0, 0.0);
+                        glColor4f(1.0, 1.0, 1.0, 1.0);
+                        //         0    5   10   15   20   25   30
+                        print_text("Диззи установил камень.");
+                }
+                
+                glDisable(GL_COLOR_MATERIAL);
+                glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+                break;
+
+            case STATE.DIZZY_TRY_CATCH_BUG_MESSAGE:
+                glEnable(GL_COLOR_MATERIAL);
+
+                final switch(lang)
+                {
+                    case dz.LANG.EN:
+                        show_dialback(16, 3, 15, 2);
+        
+                        glBindTexture(GL_TEXTURE_2D, dz.textures["font"]);
+                        glBlendFunc(GL_SRC_COLOR, GL_ONE_MINUS_SRC_COLOR);
+                        glTranslatef(-15.0, 2.0, 0.0);
+                        glColor4f(1.0, 1.0, 1.0, 1.0);
+                        //         0    5   10   15   20   25   30
+                        print_text("Dizzy tried to put the nettle\n"~
+                                   " on the bug, but it was too\n"~
+                                   "          provoked.");
+                        break;
+                        
+                    case dz.LANG.RU:
+                        show_dialback(17, 3, 17, 2);
+        
+                        glBindTexture(GL_TEXTURE_2D, dz.textures["font"]);
+                        glBlendFunc(GL_SRC_COLOR, GL_ONE_MINUS_SRC_COLOR);
+                        glTranslatef(-16.0, 2.0, 0.0);
+                        glColor4f(1.0, 1.0, 1.0, 1.0);
+                        //         0    5   10   15   20   25   30
+                        print_text(" Диззи попытался накинуть сачок\n"~
+                                   "на жука, но тот оказался слишком\n"~
+                                   "          проворен.");
+                }
+                
+                glDisable(GL_COLOR_MATERIAL);
+                glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+                break;
+
+            case STATE.DIZZY_CATCH_BUG_MESSAGE:
+                glEnable(GL_COLOR_MATERIAL);
+
+                final switch(lang)
+                {
+                    case dz.LANG.EN:
+                        show_dialback(20, 2, 20, 2);
+        
+                        glBindTexture(GL_TEXTURE_2D, dz.textures["font"]);
+                        glBlendFunc(GL_SRC_COLOR, GL_ONE_MINUS_SRC_COLOR);
+                        glTranslatef(-19.0, 1.0, 0.0);
+                        glColor4f(1.0, 1.0, 1.0, 1.0);
+                        //         0    5   10   15   20   25   30
+                        print_text("By some miracle, standing with one leg\n"~
+                                   "  on the ice, Dizzy caught the bug.");
+                        break;
+                        
+                    case dz.LANG.RU:
+                        show_dialback(18, 2, 18, 2);
+        
+                        glBindTexture(GL_TEXTURE_2D, dz.textures["font"]);
+                        glBlendFunc(GL_SRC_COLOR, GL_ONE_MINUS_SRC_COLOR);
+                        glTranslatef(-17.0, 1.0, 0.0);
+                        glColor4f(1.0, 1.0, 1.0, 1.0);
+                        //         0    5   10   15   20   25   30
+                        print_text("Каким-то чудом, стоя на одной ноге\n"~
+                                   "    на льду, Диззи поймал жука.");
+                }
+                
+                glDisable(GL_COLOR_MATERIAL);
+                glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+                break;
+
+            case STATE.DIZZY_CATCH_FISH_MESSAGE:
+                glEnable(GL_COLOR_MATERIAL);
+
+                final switch(lang)
+                {
+                    case dz.LANG.EN:
+                        show_dialback(18, 3, 17, 2);
+        
+                        glBindTexture(GL_TEXTURE_2D, dz.textures["font"]);
+                        glBlendFunc(GL_SRC_COLOR, GL_ONE_MINUS_SRC_COLOR);
+                        glTranslatef(-17.0, 2.0, 0.0);
+                        glColor4f(1.0, 1.0, 1.0, 1.0);
+                        //         0    5   10   15   20   25   30
+                        print_text("Planting the bug as a bait, Dizzy\n"~
+                                   "began to fish. Soon it bite, and\n"~
+                                   "    Dizzy took out the fish.");
+                        break;
+                        
+                    case dz.LANG.RU:
+                        show_dialback(18, 3, 17, 3);
+        
+                        glBindTexture(GL_TEXTURE_2D, dz.textures["font"]);
+                        glBlendFunc(GL_SRC_COLOR, GL_ONE_MINUS_SRC_COLOR);
+                        glTranslatef(-17.0, 2.0, 0.0);
+                        glColor4f(1.0, 1.0, 1.0, 1.0);
+                        //         0    5   10   15   20   25   30
+                        print_text("Насадив жука на крючок в качестве\n"~
+                                   " приманки, Диззи начал удить...\n"~
+                                   " Вскоре клюнуло и Диззи достал\n"~
+                                   "             рыбу.");
+                }
+                
+                glDisable(GL_COLOR_MATERIAL);
+                glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+                break;
+
+            case STATE.DIZZY_CATCH_SQUID_MESSAGE:
+                glEnable(GL_COLOR_MATERIAL);
+
+                final switch(lang)
+                {
+                    case dz.LANG.EN:
+                        show_dialback(20, 3, 19, 2);
+        
+                        glBindTexture(GL_TEXTURE_2D, dz.textures["font"]);
+                        glBlendFunc(GL_SRC_COLOR, GL_ONE_MINUS_SRC_COLOR);
+                        glTranslatef(-19.0, 2.0, 0.0);
+                        glColor4f(1.0, 1.0, 1.0, 1.0);
+                        //         0    5   10   15   20   25   30
+                        print_text("By luring squid promising delicacy in\n"~
+                                   "   the form of fish, Dizzy deftly\n"~
+                                   "    tied its limbs with the rope.");
+                        break;
+                        
+                    case dz.LANG.RU:
+                        show_dialback(17, 3, 17, 3);
+        
+                        glBindTexture(GL_TEXTURE_2D, dz.textures["font"]);
+                        glBlendFunc(GL_SRC_COLOR, GL_ONE_MINUS_SRC_COLOR);
+                        glTranslatef(-16.0, 2.0, 0.0);
+                        glColor4f(1.0, 1.0, 1.0, 1.0);
+                        //         0    5   10   15   20   25   30
+                        print_text("Приманив кальмара многообещающим\n"~
+                                   " лакомством в виде рыбки, Диззи\n"~
+                                   " ловко перевязал ему конечности\n"~
+                                   "           верёвкой.");
+                }
+                
+                glDisable(GL_COLOR_MATERIAL);
+                glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+                break;
+
+            case STATE.BAG_FOUND:
+                glEnable(GL_COLOR_MATERIAL);
+
+                final switch(lang)
+                {
+                    case dz.LANG.EN:
+                        show_dialback(12, 3, 11, 2);
+        
+                        glBindTexture(GL_TEXTURE_2D, dz.textures["font"]);
+                        glBlendFunc(GL_SRC_COLOR, GL_ONE_MINUS_SRC_COLOR);
+                        glTranslatef(-11.0, 2.0, 0.0);
+                        glColor4f(1.0, 1.0, 1.0, 1.0);
+                        //         0    5   10   15   20   25   30
+                        print_text("You have found a bag.\n"~
+                                   "  Now you can carry\n"~
+                                   "      more items");
+                        break;
+                        
+                    case dz.LANG.RU:
+                        show_dialback(12, 3, 12, 2);
+        
+                        glBindTexture(GL_TEXTURE_2D, dz.textures["font"]);
+                        glBlendFunc(GL_SRC_COLOR, GL_ONE_MINUS_SRC_COLOR);
+                        glTranslatef(-11.0, 2.0, 0.0);
+                        glColor4f(1.0, 1.0, 1.0, 1.0);
+                        //         0    5   10   15   20   25   30
+                        print_text("    Вы нашли сумку.\n"~
+                                   "Теперь вы можете нести\n"~
+                                   "   больше предметов");
+                }
+                
+                glDisable(GL_COLOR_MATERIAL);
+                glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+                break;
+                
+            case STATE.DIZZY_DIG2_MESSAGE:
+                glEnable(GL_COLOR_MATERIAL);
+
+                final switch(lang)
+                {
+                    case dz.LANG.EN:
+                        show_dialback(9, 2, 8, 1);
+        
+                        glBindTexture(GL_TEXTURE_2D, dz.textures["font"]);
+                        glBlendFunc(GL_SRC_COLOR, GL_ONE_MINUS_SRC_COLOR);
+                        glTranslatef(-8.0, 1.0, 0.0);
+                        glColor4f(1.0, 1.0, 1.0, 1.0);
+                        //         0    5   10   15   20   25   30
+                        print_text("Dizzy dug a pit");
+                        break;
+                        
+                    case dz.LANG.RU:
+                        show_dialback(9, 2, 8, 1);
+        
+                        glBindTexture(GL_TEXTURE_2D, dz.textures["font"]);
+                        glBlendFunc(GL_SRC_COLOR, GL_ONE_MINUS_SRC_COLOR);
+                        glTranslatef(-8.0, 1.0, 0.0);
+                        glColor4f(1.0, 1.0, 1.0, 1.0);
+                        //         0    5   10   15   20   25   30
+                        print_text("Диззи отрыл яму");
+                }
+                
+                glDisable(GL_COLOR_MATERIAL);
+                glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+                break;
+
+            case STATE.DIZZY_DIG3_MESSAGE:
+                glEnable(GL_COLOR_MATERIAL);
+
+                final switch(lang)
+                {
+                    case dz.LANG.EN:
+                        show_dialback(12, 11, 8, 1);
+        
+                        glBindTexture(GL_TEXTURE_2D, dz.textures["font"]);
+                        glBlendFunc(GL_SRC_COLOR, GL_ONE_MINUS_SRC_COLOR);
+                        glTranslatef(-11.0, 1.0, 0.0);
+                        glColor4f(1.0, 1.0, 1.0, 1.0);
+                        //         0    5   10   15   20   25   30
+                        print_text("Dizzy dug the shelter");
+                        break;
+                        
+                    case dz.LANG.RU:
+                        show_dialback(14, 2, 14, 1);
+        
+                        glBindTexture(GL_TEXTURE_2D, dz.textures["font"]);
+                        glBlendFunc(GL_SRC_COLOR, GL_ONE_MINUS_SRC_COLOR);
+                        glTranslatef(-13.0, 1.0, 0.0);
+                        glColor4f(1.0, 1.0, 1.0, 1.0);
+                        //         0    5   10   15   20   25   30
+                        print_text("Диззи откопал себе укрытие");
+                }
+                
+                glDisable(GL_COLOR_MATERIAL);
+                glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+                break;
+
+
+            case STATE.DIZZY_TRIES_TO_GET_WATER:
+                glEnable(GL_COLOR_MATERIAL);
+
+                final switch(lang)
+                {
+                    case dz.LANG.EN:
+                        show_dialback(18, 4, 17, 3);
+        
+                        glBindTexture(GL_TEXTURE_2D, dz.textures["font"]);
+                        glBlendFunc(GL_SRC_COLOR, GL_ONE_MINUS_SRC_COLOR);
+                        glTranslatef(-17.0, 3.0, 0.0);
+                        glColor4f(1.0, 1.0, 1.0, 1.0);
+                        //         0    5   10   15   20   25   30
+                        print_text("Dizzy tried to collect water, but\n"~
+                                   "  it seeped through the metal.\n"~
+                                   "   Also Dizzy noticed that on\n"~
+                                   "  the ground the water was kept\n"~
+                                   "          a little.");
+                        break;
+                        
+                    case dz.LANG.RU:
+                        show_dialback(17, 4, 17, 3);
+        
+                        glBindTexture(GL_TEXTURE_2D, dz.textures["font"]);
+                        glBlendFunc(GL_SRC_COLOR, GL_ONE_MINUS_SRC_COLOR);
+                        glTranslatef(-16.0, 3.0, 0.0);
+                        glColor4f(1.0, 1.0, 1.0, 1.0);
+                        //         0    5   10   15   20   25   30
+                        print_text(" Диззи попытался набрать воды,\n"~
+                                   "однако та просачивалась сквозь\n"~
+                                   "металл. Но всё же Диззи заметил,\n"~
+                                   "  что на почве вода немного\n"~
+                                   "         удерживалась");
+                }
+                
+                glDisable(GL_COLOR_MATERIAL);
+                glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+                break;
+                
+            case STATE.DIZZY_PUT_GROUND_TO_THE_BUCKET:
+                glEnable(GL_COLOR_MATERIAL);
+
+                final switch(lang)
+                {
+                    case dz.LANG.EN:
+                        show_dialback(17, 2, 16, 2);
+        
+                        glBindTexture(GL_TEXTURE_2D, dz.textures["font"]);
+                        glBlendFunc(GL_SRC_COLOR, GL_ONE_MINUS_SRC_COLOR);
+                        glTranslatef(-16.0, 1.0, 0.0);
+                        glColor4f(1.0, 1.0, 1.0, 1.0);
+                        //         0    5   10   15   20   25   30
+                        print_text("Dizzy tightly packed the bottom\n"~
+                                   "of the bucket with dense ground.");
+                        break;
+                        
+                    case dz.LANG.RU:
+                        show_dialback(16, 2, 15, 2);
+        
+                        glBindTexture(GL_TEXTURE_2D, dz.textures["font"]);
+                        glBlendFunc(GL_SRC_COLOR, GL_ONE_MINUS_SRC_COLOR);
+                        glTranslatef(-15.0, 1.0, 0.0);
+                        glColor4f(1.0, 1.0, 1.0, 1.0);
+                        //         0    5   10   15   20   25   30
+                        print_text("Диззи плотно уложил дно ведра\n"~
+                                   "       рыхлой землёй.");
+                }
+                
+                glDisable(GL_COLOR_MATERIAL);
+                glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+                break;
+                
+            case STATE.DIZZY_GET_LIGHT_WATER:
+                glEnable(GL_COLOR_MATERIAL);
+
+                final switch(lang)
+                {
+                    case dz.LANG.EN:
+                        show_dialback(15, 2, 15, 2);
+        
+                        glBindTexture(GL_TEXTURE_2D, dz.textures["font"]);
+                        glBlendFunc(GL_SRC_COLOR, GL_ONE_MINUS_SRC_COLOR);
+                        glTranslatef(-14.0, 1.0, 0.0);
+                        glColor4f(1.0, 1.0, 1.0, 1.0);
+                        //         0    5   10   15   20   25   30
+                        print_text("Dizzy took a little water to\n"~
+                                   "        the bucket.");
+                        break;
+                        
+                    case dz.LANG.RU:
+                        show_dialback(18, 2, 18, 1);
+        
+                        glBindTexture(GL_TEXTURE_2D, dz.textures["font"]);
+                        glBlendFunc(GL_SRC_COLOR, GL_ONE_MINUS_SRC_COLOR);
+                        glTranslatef(-17.0, 1.0, 0.0);
+                        glColor4f(1.0, 1.0, 1.0, 1.0);
+                        //         0    5   10   15   20   25   30
+                        print_text("Диззи набрал немного воды в ведро.");
+                }
+                
+                glDisable(GL_COLOR_MATERIAL);
+                glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+                break;
+
+            case STATE.DIZZY_SPRAYED_BUG_MESSAGE:
+                glEnable(GL_COLOR_MATERIAL);
+
+                final switch(lang)
+                {
+                    case dz.LANG.EN:
+                        show_dialback(12, 2, 12, 1);
+        
+                        glBindTexture(GL_TEXTURE_2D, dz.textures["font"]);
+                        glBlendFunc(GL_SRC_COLOR, GL_ONE_MINUS_SRC_COLOR);
+                        glTranslatef(-11.0, 1.0, 0.0);
+                        glColor4f(1.0, 1.0, 1.0, 1.0);
+                        //         0    5   10   15   20   25   30
+                        print_text("Dizzy sprayed the bug.");
+                        break;
+                        
+                    case dz.LANG.RU:
+                        show_dialback(12, 2, 11, 1);
+        
+                        glBindTexture(GL_TEXTURE_2D, dz.textures["font"]);
+                        glBlendFunc(GL_SRC_COLOR, GL_ONE_MINUS_SRC_COLOR);
+                        glTranslatef(-11.0, 1.0, 0.0);
+                        glColor4f(1.0, 1.0, 1.0, 1.0);
+                        //         0    5   10   15   20   25   30
+                        print_text("Диззи побрызгал жука.");
+                }
+                
+                glDisable(GL_COLOR_MATERIAL);
+                glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+                break;
+
+            case STATE.DIZZY_SPRAYED_GRASSHOPPER_MESSAGE:
+                glEnable(GL_COLOR_MATERIAL);
+
+                final switch(lang)
+                {
+                    case dz.LANG.EN:
+                        show_dialback(16, 2, 16, 1);
+        
+                        glBindTexture(GL_TEXTURE_2D, dz.textures["font"]);
+                        glBlendFunc(GL_SRC_COLOR, GL_ONE_MINUS_SRC_COLOR);
+                        glTranslatef(-15.0, 1.0, 0.0);
+                        glColor4f(1.0, 1.0, 1.0, 1.0);
+                        //         0    5   10   15   20   25   30
+                        print_text("Dizzy sprayed the grasshopper.");
+                        break;
+                        
+                    case dz.LANG.RU:
+                        show_dialback(14, 2, 14, 1);
+        
+                        glBindTexture(GL_TEXTURE_2D, dz.textures["font"]);
+                        glBlendFunc(GL_SRC_COLOR, GL_ONE_MINUS_SRC_COLOR);
+                        glTranslatef(-13.0, 1.0, 0.0);
+                        glColor4f(1.0, 1.0, 1.0, 1.0);
+                        //         0    5   10   15   20   25   30
+                        print_text("Диззи побрызгал кузнечика.");
+                }
+                
+                glDisable(GL_COLOR_MATERIAL);
+                glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+                break;
+
+            case STATE.NOT_ALL_ITEMS_IN_THE_CASTLE_MESSAGE:
+                glEnable(GL_COLOR_MATERIAL);
+
+                final switch(lang)
+                {
+                    case dz.LANG.EN:
+                        show_dialback(18, 2, 18, 2);
+        
+                        glBindTexture(GL_TEXTURE_2D, dz.textures["font"]);
+                        glBlendFunc(GL_SRC_COLOR, GL_ONE_MINUS_SRC_COLOR);
+                        glTranslatef(-17.0, 1.0, 0.0);
+                        glColor4f(1.0, 1.0, 1.0, 1.0);
+                        //         0    5   10   15   20   25   30
+                        print_text("\"I have not transferred all things\n"~
+                                   "  to the castle,\" thought Dizzy.");
+                        break;
+                        
+                    case dz.LANG.RU:
+                        show_dialback(14, 2, 14, 2);
+        
+                        glBindTexture(GL_TEXTURE_2D, dz.textures["font"]);
+                        glBlendFunc(GL_SRC_COLOR, GL_ONE_MINUS_SRC_COLOR);
+                        glTranslatef(-13.0, 1.0, 0.0);
+                        glColor4f(1.0, 1.0, 1.0, 1.0);
+                        //         0    5   10   15   20   25   30
+                        print_text("\"Я перенёс ещё не все вещи\n"~
+                                   "в замок\", - подумал Диззи");
+                }
+                
+                glDisable(GL_COLOR_MATERIAL);
+                glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+                break;
+
+            case STATE.ROPE_NOT_IN_THE_CASTLE_MESSAGE:
+                glEnable(GL_COLOR_MATERIAL);
+
+                final switch(lang)
+                {
+                    case dz.LANG.EN:
+                        show_dialback(12, 2, 12, 1);
+        
+                        glBindTexture(GL_TEXTURE_2D, dz.textures["font"]);
+                        glBlendFunc(GL_SRC_COLOR, GL_ONE_MINUS_SRC_COLOR);
+                        glTranslatef(-11.0, 1.0, 0.0);
+                        glColor4f(1.0, 1.0, 1.0, 1.0);
+                        //         0    5   10   15   20   25   30
+                        print_text("\"The last thing left!\"");
+                        break;
+                        
+                    case dz.LANG.RU:
+                        show_dialback(14, 2, 14, 1);
+        
+                        glBindTexture(GL_TEXTURE_2D, dz.textures["font"]);
+                        glBlendFunc(GL_SRC_COLOR, GL_ONE_MINUS_SRC_COLOR);
+                        glTranslatef(-13.0, 1.0, 0.0);
+                        glColor4f(1.0, 1.0, 1.0, 1.0);
+                        //         0    5   10   15   20   25   30
+                        print_text("\"Осталась последняя вещь!\"");
+                }
+                
+                glDisable(GL_COLOR_MATERIAL);
+                glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+                break;
+
+            case STATE.DIZZY_WHISTLE_MESSAGE:
+                glEnable(GL_COLOR_MATERIAL);
+
+                final switch(lang)
+                {
+                    case dz.LANG.EN:
+                        show_dialback(11, 2, 11, 1);
+        
+                        glBindTexture(GL_TEXTURE_2D, dz.textures["font"]);
+                        glBlendFunc(GL_SRC_COLOR, GL_ONE_MINUS_SRC_COLOR);
+                        glTranslatef(-10.0, 1.0, 0.0);
+                        glColor4f(1.0, 1.0, 1.0, 1.0);
+                        //         0    5   10   15   20   25   30
+                        print_text("Dizzy whistle and...");
+                        break;
+                        
+                    case dz.LANG.RU:
+                        show_dialback(11, 2, 10, 1);
+        
+                        glBindTexture(GL_TEXTURE_2D, dz.textures["font"]);
+                        glBlendFunc(GL_SRC_COLOR, GL_ONE_MINUS_SRC_COLOR);
+                        glTranslatef(-10.0, 1.0, 0.0);
+                        glColor4f(1.0, 1.0, 1.0, 1.0);
+                        //         0    5   10   15   20   25   30
+                        print_text("Диззи свистнул и...");
+                }
+                
+                glDisable(GL_COLOR_MATERIAL);
+                glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+                break;
+
+            case STATE.STONES_CRASHES_MESSAGE:
+                glEnable(GL_COLOR_MATERIAL);
+
+                final switch(lang)
+                {
+                    case dz.LANG.EN:
+                        show_dialback(17, 2, 16, 1);
+        
+                        glBindTexture(GL_TEXTURE_2D, dz.textures["font"]);
+                        glBlendFunc(GL_SRC_COLOR, GL_ONE_MINUS_SRC_COLOR);
+                        glTranslatef(-16.0, 1.0, 0.0);
+                        glColor4f(1.0, 1.0, 1.0, 1.0);
+                        //         0    5   10   15   20   25   30
+                        print_text("Above heard the roar of stones.");
+                        break;
+                        
+                    case dz.LANG.RU:
+                        show_dialback(18, 2, 17, 1);
+        
+                        glBindTexture(GL_TEXTURE_2D, dz.textures["font"]);
+                        glBlendFunc(GL_SRC_COLOR, GL_ONE_MINUS_SRC_COLOR);
+                        glTranslatef(-17.0, 1.0, 0.0);
+                        glColor4f(1.0, 1.0, 1.0, 1.0);
+                        //         0    5   10   15   20   25   30
+                        print_text("Наверху послышался грохот камней.");
+                }
+                
+                glDisable(GL_COLOR_MATERIAL);
+                glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+                break;
+
+            case STATE.MARTIAN_CHEMIST_NO_BIRD:
+                glEnable(GL_COLOR_MATERIAL);
+
+                final switch(lang)
+                {
+                    case dz.LANG.EN:
+                        show_dialback(5, 3, 21, 1, DIALOG_COLOR.GREEN);
+        
+                        glBindTexture(GL_TEXTURE_2D, dz.textures["font"]);
+                        glBlendFunc(GL_SRC_COLOR, GL_ONE_MINUS_SRC_COLOR);
+                        glTranslatef(-4.0, 2.0, 0.0);
+                        glColor4f(1.0, 1.0, 1.0, 1.0);
+                        //         0    5   10   15   20   25   30
+                        print_text("Grasshopper is good, but\n"~
+                                   "      where bird?");
+                        break;
+                        
+                    case dz.LANG.RU:
+                        show_dialback(6, 3, 21, 1, DIALOG_COLOR.GREEN);
+        
+                        glBindTexture(GL_TEXTURE_2D, dz.textures["font"]);
+                        glBlendFunc(GL_SRC_COLOR, GL_ONE_MINUS_SRC_COLOR);
+                        glTranslatef(-5.0, 2.0, 0.0);
+                        glColor4f(1.0, 1.0, 1.0, 1.0);
+                        //         0    5   10   15   20   25   30
+                        print_text("Кузнечик - это хорошо, но\n"~
+                                   "       где птица?");
+                }
+                
+                glDisable(GL_COLOR_MATERIAL);
+                glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+                break;
+
+            case STATE.MARTIAN_CHEMIST_NO_GRASSHOPPER:
+                glEnable(GL_COLOR_MATERIAL);
+
+                final switch(lang)
+                {
+                    case dz.LANG.EN:
+                        show_dialback(4, 3, 21, 1, DIALOG_COLOR.GREEN);
+        
+                        glBindTexture(GL_TEXTURE_2D, dz.textures["font"]);
+                        glBlendFunc(GL_SRC_COLOR, GL_ONE_MINUS_SRC_COLOR);
+                        glTranslatef(-3.0, 2.0, 0.0);
+                        glColor4f(1.0, 1.0, 1.0, 1.0);
+                        //         0    5   10   15   20   25   30
+                        print_text("The poison is good, but\n"~
+                                   "   where grasshopper?");
+                        break;
+                        
+                    case dz.LANG.RU:
+                        show_dialback(4, 3, 21, 1, DIALOG_COLOR.GREEN);
+        
+                        glBindTexture(GL_TEXTURE_2D, dz.textures["font"]);
+                        glBlendFunc(GL_SRC_COLOR, GL_ONE_MINUS_SRC_COLOR);
+                        glTranslatef(-3.0, 2.0, 0.0);
+                        glColor4f(1.0, 1.0, 1.0, 1.0);
+                        //         0    5   10   15   20   25   30
+                        print_text("Отрава - это хорошо, но\n"~
+                                   "   где сам кузнечик?");
+                }
+                
+                glDisable(GL_COLOR_MATERIAL);
+                glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+                break;
+
+            case STATE.MARTIAN_CHEMIST_NO_GRASSHOPPERS_POISON:
+                glEnable(GL_COLOR_MATERIAL);
+
+                final switch(lang)
+                {
+                    case dz.LANG.EN:
+                        show_dialback(6, 3, 21, 1, DIALOG_COLOR.GREEN);
+        
+                        glBindTexture(GL_TEXTURE_2D, dz.textures["font"]);
+                        glBlendFunc(GL_SRC_COLOR, GL_ONE_MINUS_SRC_COLOR);
+                        glTranslatef(-5.0, 2.0, 0.0);
+                        glColor4f(1.0, 1.0, 1.0, 1.0);
+                        //         0    5   10   15   20   25   30
+                        print_text("   Bird is good, but\n"~
+                                   "where grasshopper poison?");
+                        break;
+                        
+                    case dz.LANG.RU:
+                        show_dialback(7, 3, 21, 1, DIALOG_COLOR.GREEN);
+        
+                        glBindTexture(GL_TEXTURE_2D, dz.textures["font"]);
+                        glBlendFunc(GL_SRC_COLOR, GL_ONE_MINUS_SRC_COLOR);
+                        glTranslatef(-6.0, 2.0, 0.0);
+                        glColor4f(1.0, 1.0, 1.0, 1.0);
+                        //         0    5   10   15   20   25   30
+                        print_text("  Птица - это хорошо, но\n"~
+                                   "где отрава для кузнечиков?");
+                }
+                
+                glDisable(GL_COLOR_MATERIAL);
+                glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+                break;
+
+            case STATE.MARTIAN_CHEMIST_NO_BUG:
+                glEnable(GL_COLOR_MATERIAL);
+
+                final switch(lang)
+                {
+                    case dz.LANG.EN:
+                        show_dialback(4, 3, 21, 1, DIALOG_COLOR.GREEN);
+        
+                        glBindTexture(GL_TEXTURE_2D, dz.textures["font"]);
+                        glBlendFunc(GL_SRC_COLOR, GL_ONE_MINUS_SRC_COLOR);
+                        glTranslatef(-3.0, 2.0, 0.0);
+                        glColor4f(1.0, 1.0, 1.0, 1.0);
+                        //         0    5   10   15   20   25   30
+                        print_text("The poison is good, but\n"~
+                                   "      where bug?");
+                        break;
+                        
+                    case dz.LANG.RU:
+                        show_dialback(4, 3, 21, 1, DIALOG_COLOR.GREEN);
+        
+                        glBindTexture(GL_TEXTURE_2D, dz.textures["font"]);
+                        glBlendFunc(GL_SRC_COLOR, GL_ONE_MINUS_SRC_COLOR);
+                        glTranslatef(-3.0, 2.0, 0.0);
+                        glColor4f(1.0, 1.0, 1.0, 1.0);
+                        //         0    5   10   15   20   25   30
+                        print_text("Отрава - это хорошо, но\n"~
+                                   "     где сам жук?");
+                }
+                
+                glDisable(GL_COLOR_MATERIAL);
+                glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+                break;
+
+            case STATE.MARTIAN_CHEMIST_NO_FISH:
+                glEnable(GL_COLOR_MATERIAL);
+
+                final switch(lang)
+                {
+                    case dz.LANG.EN:
+                        show_dialback(1, 3, 21, 1, DIALOG_COLOR.GREEN);
+        
+                        glBindTexture(GL_TEXTURE_2D, dz.textures["font"]);
+                        glBlendFunc(GL_SRC_COLOR, GL_ONE_MINUS_SRC_COLOR);
+                        glTranslatef(-0.0, 2.0, 0.0);
+                        glColor4f(1.0, 1.0, 1.0, 1.0);
+                        //         0    5   10   15   20   25   30
+                        print_text("The bug is good, but\n"~
+                                   "     where fish?");
+                        break;
+                        
+                    case dz.LANG.RU:
+                        show_dialback(1, 3, 21, 1, DIALOG_COLOR.GREEN);
+        
+                        glBindTexture(GL_TEXTURE_2D, dz.textures["font"]);
+                        glBlendFunc(GL_SRC_COLOR, GL_ONE_MINUS_SRC_COLOR);
+                        glTranslatef(-0.0, 2.0, 0.0);
+                        glColor4f(1.0, 1.0, 1.0, 1.0);
+                        //         0    5   10   15   20   25   30
+                        print_text("Жук - это хорошо, но\n"~
+                                   "     где рыба?");
+                }
+                
+                glDisable(GL_COLOR_MATERIAL);
+                glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+                break;
+                
+            case STATE.MARTIAN_CHEMIST_NO_SQUID:
+                glEnable(GL_COLOR_MATERIAL);
+
+                final switch(lang)
+                {
+                    case dz.LANG.EN:
+                        show_dialback(2, 3, 21, 1, DIALOG_COLOR.GREEN);
+        
+                        glBindTexture(GL_TEXTURE_2D, dz.textures["font"]);
+                        glBlendFunc(GL_SRC_COLOR, GL_ONE_MINUS_SRC_COLOR);
+                        glTranslatef(-1.0, 2.0, 0.0);
+                        glColor4f(1.0, 1.0, 1.0, 1.0);
+                        //         0    5   10   15   20   25   30
+                        print_text("The fish is good, but\n"~
+                                   "     where squid?");
+                        break;
+                        
+                    case dz.LANG.RU:
+                        show_dialback(2, 3, 21, 1, DIALOG_COLOR.GREEN);
+        
+                        glBindTexture(GL_TEXTURE_2D, dz.textures["font"]);
+                        glBlendFunc(GL_SRC_COLOR, GL_ONE_MINUS_SRC_COLOR);
+                        glTranslatef(-1.0, 2.0, 0.0);
+                        glColor4f(1.0, 1.0, 1.0, 1.0);
+                        //         0    5   10   15   20   25   30
+                        print_text("Рыба - это хорошо, но\n"~
+                                   "     где кальмар?");
+                }
+                
+                glDisable(GL_COLOR_MATERIAL);
+                glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+                break;
+
+            case STATE.MARTIAN_CHEMIST_NO_BUGS_POISON:
+                glEnable(GL_COLOR_MATERIAL);
+
+                final switch(lang)
+                {
+                    case dz.LANG.EN:
+                        show_dialback(3, 3, 21, 1, DIALOG_COLOR.GREEN);
+        
+                        glBindTexture(GL_TEXTURE_2D, dz.textures["font"]);
+                        glBlendFunc(GL_SRC_COLOR, GL_ONE_MINUS_SRC_COLOR);
+                        glTranslatef(-2.0, 2.0, 0.0);
+                        glColor4f(1.0, 1.0, 1.0, 1.0);
+                        //         0    5   10   15   20   25   30
+                        print_text("The squid is good, but\n"~
+                                   "   where bug poison?");
+                        break;
+                        
+                    case dz.LANG.RU:
+                        show_dialback(5, 3, 21, 1, DIALOG_COLOR.GREEN);
+        
+                        glBindTexture(GL_TEXTURE_2D, dz.textures["font"]);
+                        glBlendFunc(GL_SRC_COLOR, GL_ONE_MINUS_SRC_COLOR);
+                        glTranslatef(-4.0, 2.0, 0.0);
+                        glColor4f(1.0, 1.0, 1.0, 1.0);
+                        //         0    5   10   15   20   25   30
+                        print_text("Кальмар - это хорошо, но\n"~
+                                   "  где отрава от жуков?");
+                }
+                
+                glDisable(GL_COLOR_MATERIAL);
+                glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+                break;
+
+            case STATE.MARTIAN_CHEMIST_THANK_YOU:
+                glEnable(GL_COLOR_MATERIAL);
+
+                final switch(lang)
+                {
+                    case dz.LANG.EN:
+                        show_dialback(10, 2, 21, 1, DIALOG_COLOR.GREEN);
+        
+                        glBindTexture(GL_TEXTURE_2D, dz.textures["font"]);
+                        glBlendFunc(GL_SRC_COLOR, GL_ONE_MINUS_SRC_COLOR);
+                        glTranslatef(-9.0, 1.0, 0.0);
+                        glColor4f(1.0, 1.0, 1.0, 1.0);
+                        //         0    5   10   15   20   25   30
+                        print_text("Thank you, it is that needed.");
+                        break;
+                        
+                    case dz.LANG.RU:
+                        show_dialback(8, 2, 21, 1, DIALOG_COLOR.GREEN);
+        
+                        glBindTexture(GL_TEXTURE_2D, dz.textures["font"]);
+                        glBlendFunc(GL_SRC_COLOR, GL_ONE_MINUS_SRC_COLOR);
+                        glTranslatef(-7.0, 1.0, 0.0);
+                        glColor4f(1.0, 1.0, 1.0, 1.0);
+                        //         0    5   10   15   20   25   30
+                        print_text("Спасибо, это то, что нужно.");
+                }
+                
+                glDisable(GL_COLOR_MATERIAL);
+                glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+                break;
+
+            case STATE.MARTIAN_CHEMIST_NEED_WATER_FROM_LIGHT_TREE_CAVE:
+                glEnable(GL_COLOR_MATERIAL);
+
+                final switch(lang)
+                {
+                    case dz.LANG.EN:
+                        show_dialback(16, 2, 21, 3, DIALOG_COLOR.GREEN);
+        
+                        glBindTexture(GL_TEXTURE_2D, dz.textures["font"]);
+                        glBlendFunc(GL_SRC_COLOR, GL_ONE_MINUS_SRC_COLOR);
+                        glTranslatef(-15.0, 1.0, 0.0);
+                        glColor4f(1.0, 1.0, 1.0, 1.0);
+                        //         0    5   10   15   20   25   30
+                        print_text("     Well done. Rest the last\n"~
+                                   "    ingridient: bring, please,\n"~
+                                   "the water from the light tree cave.");
+                        break;
+                        
+                    case dz.LANG.RU:
+                        show_dialback(12, 2, 21, 3, DIALOG_COLOR.GREEN);
+        
+                        glBindTexture(GL_TEXTURE_2D, dz.textures["font"]);
+                        glBlendFunc(GL_SRC_COLOR, GL_ONE_MINUS_SRC_COLOR);
+                        glTranslatef(-11.0, 1.0, 0.0);
+                        glColor4f(1.0, 1.0, 1.0, 1.0);
+                        //         0    5   10   15   20   25   30
+                        print_text("  Отлично. Остался последний\n"~
+                                   "ингридиент: принеси, пожалуйста\n"~
+                                   " воды из пещеры сияющего дерева");
+                }
+                
+                glDisable(GL_COLOR_MATERIAL);
+                glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+                break;
+
+            case STATE.MARTIAN_CHEMIST_GIVES_PSYCHOTROPIC_SPRAY:
+                glEnable(GL_COLOR_MATERIAL);
+
+                final switch(lang)
+                {
+                    case dz.LANG.EN:
+                        show_dialback(19, 5, 21, 5, DIALOG_COLOR.GREEN);
+        
+                        glBindTexture(GL_TEXTURE_2D, dz.textures["font"]);
+                        glBlendFunc(GL_SRC_COLOR, GL_ONE_MINUS_SRC_COLOR);
+                        glTranslatef(-18.0, 4.0, 0.0);
+                        glColor4f(1.0, 1.0, 1.0, 1.0);
+                        //         0    5   10   15   20   25   30
+                        print_text("  Well? Now we will do so... Done!\n"~
+                                   " With this thing it is necessary to\n"~
+                                   "sprinkle pests, further instructions\n"~
+                                   " you will receive from the engineer.\n"~
+                                   "But hurry up! A huge meteorite crashed\n"~
+                                   " into the castle and broke the wall.\n"~
+                                   "I blocked some of the passages, but\n"~
+                                   "      the air continues to leak.");
+                        break;
+                        
+                    case dz.LANG.RU:
+                        show_dialback(10, 6, 21, 6, DIALOG_COLOR.GREEN);
+        
+                        glBindTexture(GL_TEXTURE_2D, dz.textures["font"]);
+                        glBlendFunc(GL_SRC_COLOR, GL_ONE_MINUS_SRC_COLOR);
+                        glTranslatef(-9.0, 5.0, 0.0);
+                        glColor4f(1.0, 1.0, 1.0, 1.0);
+                        //         0    5   10   15   20   25   30
+                        print_text("   Что ж? Сейчас мы немного\n"~
+                                   "   поколдуем... Вот готово!\n"~
+                                   " Этой штукой надо побрызгать\n"~
+                                   "   вредителей, дальнейшие\n"~
+                                   "  инструкции ты получишь от\n"~
+                                   "инженера. Но поспеши! В замок\n"~
+                                   "  врезался огромный метеорит\n"~
+                                   " и проломил стену. Я перекрыл\n"~
+                                   " некоторые ходы, но воздух\n"~
+                                   "     продолжает утекать.");
+                }
+                
+                glDisable(GL_COLOR_MATERIAL);
+                glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+                break;
+
+            case STATE.ZAKS_SAYS_FAREWELL_WORD:
+                glEnable(GL_COLOR_MATERIAL);
+
+                final switch(lang)
+                {
+                    case dz.LANG.EN:
+                        show_dialback(11, 3, 21, 2, DIALOG_COLOR.RED);
+        
+                        glBindTexture(GL_TEXTURE_2D, dz.textures["font"]);
+                        glBlendFunc(GL_SRC_COLOR, GL_ONE_MINUS_SRC_COLOR);
+                        glTranslatef(-10.0, 2.0, 0.0);
+                        glColor4f(1.0, 1.0, 1.0, 1.0);
+                        //         0    5   10   15   20   25   30
+                        print_text("    Oh, you little bastard!\n"~
+                                   "OK, I'm leaving. But you never\n"~
+                                   " get out of here! Ha ha ha ha.\n");
+                        break;
+                        
+                    case dz.LANG.RU:
+                        show_dialback(11, 3, 21, 2, DIALOG_COLOR.RED);
+        
+                        glBindTexture(GL_TEXTURE_2D, dz.textures["font"]);
+                        glBlendFunc(GL_SRC_COLOR, GL_ONE_MINUS_SRC_COLOR);
+                        glTranslatef(-10.0, 2.0, 0.0);
+                        glColor4f(1.0, 1.0, 1.0, 1.0);
+                        //         0    5   10   15   20   25   30
+                        print_text("Ах ты гадёныш! Хорошо я ухожу.\n"~
+                                   " Но тебе никогда не выбраться\n"~
+                                   "    отсюда. Ха-ха-ха-ха!");
                 }
                 
                 glDisable(GL_COLOR_MATERIAL);

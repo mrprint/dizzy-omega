@@ -29,6 +29,9 @@ class GroundGarden:StaticGameObject
     {
         DizzyOmega dz = cast(DizzyOmega) root;
 
+        if (abs(root.scrx - 330.0) > 35.0 || root.scry != 0)
+            return;
+
         glPushMatrix();
         if (frame < 0)
         {

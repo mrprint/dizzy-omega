@@ -265,7 +265,7 @@ class Dizzy:LiveGameObject
             glTranslatef(0.0, translate, 0.0);
         }
 
-        if (name == "Left_Fire" || name == "Right_Fire" || name == "defaultobject")
+        if (name == "Left_Fire" || name == "Right_Fire")
         {
             return false;
         }
@@ -329,7 +329,7 @@ class Dizzy:LiveGameObject
             glTranslatef(0.0, translate, 0.0);
         }
 
-        if (name == "Left_Fire" || name == "Right_Fire" || name == "defaultobject")
+        if (name == "Left_Fire" || name == "Right_Fire")
         {
             return false;
         }
@@ -353,7 +353,7 @@ class Dizzy:LiveGameObject
         glRotatef(f, 1.0, 0.0, 0.0);
         glTranslatef(0.0, -1.4, 0.0);
 
-        if (name == "Left_Fire" || name == "Right_Fire" || name == "defaultobject")
+        if (name == "Left_Fire" || name == "Right_Fire")
         {
             return false;
         }
@@ -397,7 +397,7 @@ class Dizzy:LiveGameObject
             glTranslatef(0.0, -1.9, 0.0);
         }
 
-        if (name == "Left_Fire" || name == "Right_Fire" || name == "defaultobject")
+        if (name == "Left_Fire" || name == "Right_Fire")
         {
             return false;
         }
@@ -463,7 +463,7 @@ class Dizzy:LiveGameObject
             glTranslatef(0.0, -1.1, 0.0);
         }
 
-        if (name == "Left_Fire" || name == "Right_Fire" || name == "defaultobject")
+        if (name == "Left_Fire" || name == "Right_Fire")
         {
             return false;
         }
@@ -484,6 +484,12 @@ class Dizzy:LiveGameObject
         glTranslatef(0.0, 1.4, 0.0);
         glRotatef(-f, 1.0, 0.0, 0.0);
         glTranslatef(0.0, -1.4, 0.0);
+        
+        if (name == "Left_Fire" || name == "Right_Fire")
+        {
+            return false;
+        }
+
         return true;
     }
     
@@ -539,7 +545,7 @@ class Dizzy:LiveGameObject
             }
         }
 
-        if (name == "Left_Fire" || name == "Right_Fire" || name == "defaultobject")
+        if (name == "Left_Fire" || name == "Right_Fire")
         {
             return false;
         }
@@ -599,7 +605,7 @@ class Dizzy:LiveGameObject
             }
         }
 
-        if (name == "Left_Fire" || name == "Right_Fire" || name == "defaultobject")
+        if (name == "Left_Fire" || name == "Right_Fire")
         {
             return false;
         }
@@ -646,7 +652,7 @@ class Dizzy:LiveGameObject
             glTranslatef(0.0, -1.9, 0.0);
         }
         
-        if (name == "Left_Fire" || name == "Right_Fire" || name == "defaultobject")
+        if (name == "Left_Fire" || name == "Right_Fire")
         {
             return false;
         }
@@ -695,7 +701,7 @@ class Dizzy:LiveGameObject
             glRotatef(38, 1.0, 0.0, 0.0);
         }
 
-        if (name == "Left_Fire" || name == "Right_Fire" || name == "defaultobject")
+        if (name == "Left_Fire" || name == "Right_Fire")
         {
             return false;
         }
@@ -759,7 +765,7 @@ class Dizzy:LiveGameObject
         if (f < 25.0)
         {
             if (name == "Left_Hand")
-            {
+            {    
                 glTranslatef(lhpt[0][0], lhpt[0][1], lhpt[0][2]);
                 glRotatef(lhpr[0][0], lhpr[0][1], lhpr[0][2], lhpr[0][3]);
             }
@@ -832,7 +838,7 @@ class Dizzy:LiveGameObject
             }
         }
         
-        if (name == "Left_Fire" || name == "Right_Fire" || name == "defaultobject")
+        if (name == "Left_Fire" || name == "Right_Fire")
         {
             return false;
         }
@@ -1061,7 +1067,7 @@ class Dizzy:LiveGameObject
                     jump = true;
                     frame = 0;
 
-                    if(sounds && cosm && jump_sound && Mix_PlayChannel(0, jump_sound, -1)==-1)
+                    if(sounds && cosm && !underwater && jump_sound && Mix_PlayChannel(0, jump_sound, -1)==-1)
                     {
                         writefln("Mix_PlayChannel jump_sound: %s\n",
                             Mix_GetError().to!(string)());
@@ -1315,11 +1321,14 @@ class Dizzy:LiveGameObject
 
     void die(string by)
     {
-        energy = 0.0;
-        frame = 0;
-        lives--;
-        killed_by = by;
-        state = STATE.DIE_ANIM;
+        if (state != STATE.DIE_ANIM)
+        {
+            energy = 0.0;
+            frame = 0;
+            lives--;
+            killed_by = by;
+            state = STATE.DIE_ANIM;
+        }
     }
 
     void rise()
@@ -1367,6 +1376,17 @@ class Dizzy:LiveGameObject
             if (abs(dx) < 0.01) dx = 0.0;
         }
     }
+
+    void start_jump(GlobalState gs)
+    {
+        if (underwater)
+        {
+            if (!cosm) dy = JUMP_V;
+            else dy = MARS_JUMP_V;
+            search_surface = false;
+            jump = true;
+        }
+    }    
 
     void change_costume(GlobalState gs)
     {

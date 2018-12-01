@@ -18,7 +18,8 @@ class GameObject
     protected MainGameObject root;
     long frame;
     ulong state;
-    const (ObjFile)*[string] models;
+    shared ObjFile*[string] models;
+    shared ObjFile*[SC] screens;
     Vector[][string][string] collision_objects;
 
     this(MainGameObject root_object)

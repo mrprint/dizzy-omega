@@ -7,6 +7,7 @@ import derelict.opengl3.gl;
 
 import std.algorithm.comparison;
 import std.algorithm.searching;
+import std.concurrency;
 import std.conv;
 import std.format;
 import std.functional;
@@ -21,17 +22,27 @@ import unde.games.dizzy.omega.animations.bag_bug_anim;
 import unde.games.dizzy.omega.animations.bucket;
 import unde.games.dizzy.omega.animations.drop;
 import unde.games.dizzy.omega.animations.fall_platform;
+import unde.games.dizzy.omega.animations.ground_castle;
+import unde.games.dizzy.omega.animations.ground_cave;
 import unde.games.dizzy.omega.animations.ground_garden;
 import unde.games.dizzy.omega.animations.light_drop;
 import unde.games.dizzy.omega.animations.meteorite;
 import unde.games.dizzy.omega.animations.platform1;
+import unde.games.dizzy.omega.animations.platform4;
 import unde.games.dizzy.omega.animations.explosure;
 import unde.games.dizzy.omega.animations.sky_zaks;
 import unde.games.dizzy.omega.animations.stalagmite;
 import unde.games.dizzy.omega.animations.stone_00;
 import unde.games.dizzy.omega.animations.stone_01;
 import unde.games.dizzy.omega.animations.stone_02;
+import unde.games.dizzy.omega.animations.stones;
+import unde.games.dizzy.omega.animations.water;
+import unde.games.dizzy.omega.animations.lava;
+import unde.games.dizzy.omega.animations.statical;
+import unde.games.dizzy.omega.animations.things_sweep_away_zaks;
+import unde.games.dizzy.omega.bird;
 import unde.games.dizzy.omega.bug;
+import unde.games.dizzy.omega.grasshopper;
 import unde.games.dizzy.omega.dialogs;
 import unde.games.dizzy.omega.dizzy;
 import unde.games.dizzy.omega.dog;
@@ -39,8 +50,12 @@ import unde.games.dizzy.omega.item;
 import unde.games.dizzy.omega.rope;
 import unde.games.dizzy.omega.rotatable;
 import unde.games.dizzy.omega.save_load;
+import unde.games.dizzy.omega.scene_loader;
 import unde.games.dizzy.omega.star;
 import unde.games.dizzy.omega.tree;
+import unde.games.dizzy.omega.fish;
+import unde.games.dizzy.omega.flame;
+import unde.games.dizzy.omega.squid;
 import unde.games.obj_loader;
 import unde.games.object;
 import unde.games.renderer;
@@ -62,6 +77,8 @@ enum STATE
     BURNED_IN_LAVA = 8,
     DAMAGED_BY_PIN = 9,
     HIT_BY_ROCK = 10,
+    BURNED_IN_FLAME = 11,
+    CRUSHED_BY_PRESSURE = 12,
     HELP = 99,
     MARTIAN_AGRONOMIST_HELLO  = 100,
     MARTIAN_AGRONOMIST_HELLO1 = 101,
@@ -83,6 +100,7 @@ enum STATE
     MARTIAN_ENGINEER_TAKES_PLAYER = 800,
     DIZZY_TIED_ROPE_MESSAGE = 900,
     DIZZY_UNTIED_ROPE_MESSAGE = 901,
+    DIZZY_UNTIED_SHORT_ROPE_MESSAGE = 902,
     MARTIAN_CHEMIST_HELLO  = 1000,
     MARTIAN_CHEMIST_HELLO1 = 1001,
     MARTIAN_CHEMIST_HELLO2 = 1002,
@@ -108,7 +126,40 @@ enum STATE
     MARTIAN_ENGINEER_GIVES_SPADE = 2300,
     DIZZY_DIG_MESSAGE = 2400,
     DIZZY_DIG_ANIM = 2401,
-    TO_BE_CONTINUED_MESSAGE = 2500,
+    BAG_FOUND = 2500,
+    DIZZY_OPEN_DOOR = 2600,
+    DIZZY_DIG2_MESSAGE = 2700,
+    DIZZY_CATCH_GRASSHOPPER_MESSAGE = 2800,
+    MARTIAN_CHEMIST_NO_GRASSHOPPER = 2900,
+    MARTIAN_CHEMIST_NO_BIRD = 2901,
+    MARTIAN_CHEMIST_NO_GRASSHOPPERS_POISON = 2902,
+    MARTIAN_CHEMIST_THANK_YOU = 3000,
+    MARTIAN_CHEMIST_NEED_WATER_FROM_LIGHT_TREE_CAVE = 3100,
+    DIZZY_PUT_STONE_MESSAGE = 3200,
+    DIZZY_TRY_CATCH_BUG_MESSAGE = 3300,
+    DIZZY_CATCH_BUG_MESSAGE = 3400,
+    DIZZY_CATCH_FISH_MESSAGE = 3500,
+    DIZZY_CATCH_SQUID_MESSAGE = 3600,
+    MARTIAN_CHEMIST_NO_BUG = 3700,
+    MARTIAN_CHEMIST_NO_FISH = 3701,
+    MARTIAN_CHEMIST_NO_SQUID = 3702,
+    MARTIAN_CHEMIST_NO_BUGS_POISON = 3703,
+    MARTIAN_ENGINEER_RETURNS_BUCKET = 3800,
+    DIZZY_TRIES_TO_GET_WATER = 3900,
+    DIZZY_PUT_GROUND_TO_THE_BUCKET = 4000,
+    DIZZY_GET_LIGHT_WATER = 4100,
+    MARTIAN_CHEMIST_GIVES_PSYCHOTROPIC_SPRAY = 4200,
+    DIZZY_SPRAYED_BUG_MESSAGE = 4300,
+    DIZZY_SPRAYED_GRASSHOPPER_MESSAGE = 4400,
+    MARTIAN_ENGINEER_GIVES_WHISTLE = 4500,
+    DIZZY_DIG3_MESSAGE = 4600,
+    NOT_ALL_ITEMS_IN_THE_CASTLE_MESSAGE = 4700,
+    ROPE_NOT_IN_THE_CASTLE_MESSAGE = 4800,
+    DIZZY_WHISTLE_MESSAGE = 4900,
+    THINGS_SWEEP_AWAY_ZAKS_ANIM = 4901,
+    ZAKS_SAYS_FAREWELL_WORD = 4902,
+    STONES_CRASHES_MESSAGE = 4903,
+    TO_BE_CONTINUED_MESSAGE = 10000,
 }
 
 enum TEMP_MESSAGES
@@ -120,17 +171,148 @@ enum TEMP_MESSAGES
     PLAYS
 }
 
+immutable string[SC] screen_names;
+immutable string[SC] screen_names_ru;
+
+static this()
+{
+    screen_names =
+    [
+        SC(-1,0): "Entrance to cave",
+        SC(0, 0): "The landing place",
+        SC(1, 0): "The cave of light tree",
+        SC(1, 2): "The cave",
+        SC(1, 4): "The cave",
+        SC(2, 0): "The valley of death",
+        SC(3, 0): "The valley of death",
+        SC(4, 0): "The martian well",
+        SC(5, 0): "Under the open sky of Mars",
+        SC(6, 0): "Entrance to the cave of an extinct volcano",
+        SC(7, 0): "In the cave",
+        SC(8, 0): "In the cave",
+        SC(9, 0): "The first Martian",
+        SC(10,0): "Farmstead of the agronomist",
+        SC(10,2): "Barn of the agronomist",
+        SC(10,4): "The booth",
+        SC(11,0): "Garden",
+        SC(12,0): "Entrance to the secret laboratory",
+        SC(13,0): "The engineer",
+        SC(14,0): "Muzzle of the volcano",
+        SC(14,-1): "Muzzle of the volcano",
+        SC(15,0): "Chemical laboratory",
+        SC(16,0): "Cave corridor",
+        SC(17,0): "Corridor in the cave",
+        SC(18,0): "Exit from the cave of volcano",
+        SC(19,0): "Walls of the castle",
+        SC(19,1): "Walls of the castle",
+        SC(11,-1): "Descent into the cave",
+        SC(11,-2): "The mine",
+        SC(11,-3): "The bottom of mine",
+        SC(10,-3): "In shallow water",
+        SC( 9,-3): "In shallow water",
+        SC( 8,-3): "Afloat",
+        SC( 8,-4): "In the deep",
+        SC( 8,-5): "Dangerous deep",
+        SC( 8,-6): "Under thich layer of water",
+        SC( 8,-7): "Before entrance into the deep cave",
+        SC( 9,-7): "Lair of deep-sea dweller",
+        SC( 8,-8): "And can not see the bottom",
+        SC(12,-3): "Corridor in the deep of volcano",
+        SC(13,-3): "Corridor",
+        SC(14,-3): "Breakage",
+        SC(14,-4): "Fork",
+        SC(15,-4): "Blockage",
+        SC(14,-5): "It would seem the bottom",
+        SC(13,-5): "Again breakage",
+        SC(13,-6): "At entrance to the cave",
+        SC(12,-6): "Lair of shallow habitats",
+        SC(13,-7): "On the bottom ov volcano",
+        SC(14,-7): "At entrance to the castle of evil wizard",
+        SC(15,-7): "Travel gallery of Dizzy",
+        SC(15,-8): "Travel gallery of Dizzy",
+        SC(15,-9): "Aquarium and... Fire",
+        SC(16,-9): "Evil wizard Zaks",
+    ];
+
+    screen_names_ru =
+    [
+        SC(-1,0): "Вход в пещеру",
+        SC(0, 0): "Место посадки",
+        SC(1, 0): "Пещера сияющего дерева",
+        SC(1, 2): "Пещера",
+        SC(1, 4): "Пещера",
+        SC(2, 0): "Долина смерти",
+        SC(3, 0): "Долина смерти",
+        SC(4, 0): "Марсианский колодец",
+        SC(5, 0): "Под открытым небом Марса",
+        SC(6, 0): "Вход в пещеру потухшего вулкана",
+        SC(7, 0): "В пещере",
+        SC(8, 0): "В пещере",
+        SC(9, 0): "Первый марсианин",
+        SC(10,0): "Усадьба агронома",
+        SC(10,2): "Сарай агронома",
+        SC(10,4): "Будка",
+        SC(11,0): "Сад",
+        SC(12,0): "Вход в секретную лабораторию",
+        SC(13,0): "Инженер",
+        SC(14,0): "Жерло вулкана",
+        SC(14,-1): "Жерло вулкана",
+        SC(15,0): "Химическая лаборатория",
+        SC(16,0): "Пещерный коридор",
+        SC(17,0): "Коридор пещерный",
+        SC(18,0): "Выход из пещеры вулкана",
+        SC(19,0): "Стены замка",
+        SC(19,1): "Стены замка",
+        SC(11,-1): "Спуск в пещеру",
+        SC(11,-2): "Шахта",
+        SC(11,-3): "Дно шахты",
+        SC(10,-3): "На мелководье",
+        SC( 9,-3): "На мелководье",
+        SC( 8,-3): "На поверхности",
+        SC( 8,-4): "В глубине",
+        SC( 8,-5): "Опасная глубина",
+        SC( 8,-6): "Под толстым слоем воды",
+        SC( 8,-7): "У входа в глубинную пещеру",
+        SC( 9,-7): "Логово глубоководного обитателя",
+        SC( 8,-8): "И не видно дна",
+        SC(12,-3): "Коридор в глубине вулкана",
+        SC(13,-3): "Коридор",
+        SC(14,-3): "Обрыв",
+        SC(14,-4): "Развилка",
+        SC(15,-4): "Завал",
+        SC(14,-5): "Казалось бы дно",
+        SC(13,-5): "Снова обрыв",
+        SC(13,-6): "У входа в пещеру",
+        SC(12,-6): "Логово мелководных обитателей",
+        SC(13,-7): "На дне вулкана",
+        SC(14,-7): "У входа в замок злого волшебника",
+        SC(15,-7): "Галерея путешествий Диззи",
+        SC(15,-8): "Галерея путешествий Диззи",
+        SC(15,-9): "Аквариум и... Огонь",
+        SC(16,-9): "Злой волшебник - Закс",
+    ];
+}
+
+bool in_the_castle(Item item)
+{
+    return item.inventory ||
+        item.x >= (15*30.0 - 15.0) &&
+        item.y <= (-7*17.0 + 8.5);
+}
+
 class DizzyOmega:MainGameObject
 {
     const (ObjFile)*[10] energy_star;
     Item[] items;
     size_t[] inventory;
+    int max_items = 3;
     GLuint[string] textures;
     Star[] stars;
     Tree[] trees;
     StaticGameObject[] animations;
     Dialogs dialogs;
     Star star0;
+    Star star1;
     Item blanket;
     Item branch;
     Item player;
@@ -146,20 +328,48 @@ class DizzyOmega:MainGameObject
     Item spade;
     Item light_branch;
     Item short_rope;
+    Item stone1;
     Item stone2;
+    Item stone3;
+    Item bag;
+    Item key;
+    Item pressprot;
+    Item bugs_poison;
+    Item grasshoppers_poison;
+    Item grasshopper_item;
+    Item bird_item;
+    Item bug_item;
+    Item nettle;
+    Item fish_item;
+    Item fish_rod;
+    Item squid_item;
+    Item bucket_with_ground;
+    Item bucket_with_light_water;
+    Item psychotropic_spray;
+    Item whistle;
+    Item umbrella;
+    Item kitchen_knife;
     Bucket bucket_anim;
     Rope rope1;
     Rope rope2;
+    Rope rope3;
+    GroundCastle ground_castle;
+    GroundCave ground_cave;
     GroundGarden ground_garden;
+    Stones stones;
+    Rotatable door;
+    Rotatable zaks;
     int rope_state;
     
     Mix_Music *energy_minus;
     Mix_Music *energy_plus;
     long energy_start_tick = -1;
-    bool music = true;
-    Mix_Music *music1;
-    float music1_len;
+    bool music;
+    Mix_Music*[] musics;
+    float[] music_len;
+    string[] music_name;
     long music_start_tick = -1;
+    int track;
     
     //float stopped_music_position;
     MUSIC_STATE music_state;
@@ -171,7 +381,7 @@ class DizzyOmega:MainGameObject
         ENERGY_MINUS,
     }
 
-    GLuint scene_list;
+    GLuint[SC] screen_lists;
 
     enum LANG
     {
@@ -182,8 +392,8 @@ class DizzyOmega:MainGameObject
 
     LANG lang;
     
-    string[string] names; 
-    string[string] names_ru;
+    immutable string[string] names; 
+    immutable string[string] names_ru;
 
     string[TEMP_MESSAGES] temp_messages;
     string[TEMP_MESSAGES] temp_messages_ru;
@@ -191,14 +401,6 @@ class DizzyOmega:MainGameObject
     string temp_message_str;
     long temp_message_frame_from;
     long temp_message_frame_to;
-
-    struct SC
-    {
-        int x, y;
-    }
-
-    string[SC] screen_names;
-    string[SC] screen_names_ru;
 
     int reinit_draw;
     bool[string] done_dialogs;
@@ -210,6 +412,13 @@ class DizzyOmega:MainGameObject
     Dog dog;
     Rotatable martian_engineer;
     Explosure explosure;
+    Grasshopper grasshopper;
+    Bird bird;
+    Bug bug;
+    Fish fish;
+    Squid squid;
+    ThingsSweepAwayZaks things_sweep_away_zaks;
+    Water water3;
 
     int dizzy_used_knife_quest_state = -1;
     int dizzy_throw_branch_quest_state = -1;
@@ -217,6 +426,7 @@ class DizzyOmega:MainGameObject
     int dizzy_live_after_explosure_quest_state = -1;
     int dizzy_water_flowers_state = -1;
     int wait_meteorite = -1;
+    int wait_meteorite2 = -1;
 
     struct BranchQuestVariables {
         int st;
@@ -224,6 +434,8 @@ class DizzyOmega:MainGameObject
         float x, y;
         float dx, dy;
     }
+
+    Tid sl_tid;
     
     BranchQuestVariables branch_quest_variables;
 
@@ -254,56 +466,108 @@ class DizzyOmega:MainGameObject
                         "stalagmite", "fall-platform-0",
                         "platform1", "platform2",
                         "ground-garden", "ground-garden-1", "ground-garden-2",
-                        "ground-garden-3",])
+                        "ground-garden-3",
+                        "cave-water", "cave-water-2", "cave-water-3",
+                        "aquarium", "door",
+                        "bird", "flame", "bird-item",
+                        "grasshoppers-poison", "bugs-poison",
+                        "key", "pressure-protection",
+                        "dynamite-grand", "nettle",
+                        "lava-bubble", "platform4",
+                        "ground-cave", "ground-cave-1",
+                        "fish-item", "squid-item",
+                        "psychotropic-spray", "whistle",
+                        "zaks", "ground-castle", "ground-castle-1",
+                        "stones-1", "stones-2"])
         {
-            models[model] = load_objfile(format("models/%s.obj", model));
+            models[model] = cast(shared) load_objfile(format("models/%s.obj", model));
         }
 
         models["stone1"] = models["stone"];
         models["stone2"] = models["stone"];
+        models["stone3"] = models["stone"];
+        models["bucket-with-ground"] = models["bucket"];
+        models["bucket-with-light-water"] = models["bucket"];
         
-        models["scene"] = load_objfile("models/scene-01.obj");
-        models["solid"] = load_objfile("models/scene-01-solid.obj");
-        models["water"] = load_objfile("models/scene-01-water.obj");
-        models["clouds"] = load_objfile("models/scene-01-clouds.obj");
-        models["dangers"] = load_objfile("models/scene-01-dangers.obj");
-        models["temp-solid"] = load_objfile("models/temp-solid.obj");
-
+        models["solid"] = cast(shared) load_objfile("models/scene-solid.obj");
+        models["water"] = cast(shared) load_objfile("models/scene-01-water.obj");
+        models["clouds"] = cast(shared) load_objfile("models/scene-01-clouds.obj");
+        models["dangers"] = cast(shared) load_objfile("models/scene-dangers.obj");
+        models["temp-solid"] = cast(shared) load_objfile("models/temp-solid.obj");
+    
         foreach(i; 0..14)
         {
             models[format("tree-%02d", i)] = 
-                load_objfile(format("models/mars-tree-%02d.obj", i));
+                cast(shared) load_objfile(format("models/mars-tree-%02d.obj", i));
         }
         
-        models["stone-00"] = load_objfile("models/stone-00.obj");
-        models["stone-01"] = load_objfile("models/stone-01.obj");
-        models["stone-02"] = load_objfile("models/stone-02.obj");
+        models["stone-00"] = cast(shared) load_objfile("models/stone-00.obj");
+        models["stone-01"] = cast(shared) load_objfile("models/stone-01.obj");
+        models["stone-02"] = cast(shared) load_objfile("models/stone-02.obj");
 
-        models["meteorite-01"] = load_objfile("models/meteorite-01.obj");
-        models["meteorite-02"] = load_objfile("models/meteorite-02.obj");
-        models["meteorite-03"] = load_objfile("models/meteorite-03.obj");
+        models["meteorite-01"] = cast(shared) load_objfile("models/meteorite-01.obj");
+        models["meteorite-02"] = cast(shared) load_objfile("models/meteorite-02.obj");
+        models["meteorite-03"] = cast(shared) load_objfile("models/meteorite-03.obj");
         
-        models["small-stone-00"] = load_objfile("models/small-stone-00.obj");
+        models["small-stone-00"] = cast(shared) load_objfile("models/small-stone-00.obj");
         
         for (int i=0; i < 10; i++)
         {
-            models["star-"~i.to!(string)] = load_objfile(("models/energy-star-"~i.to!(string)~".obj"));
+            models["star-"~i.to!(string)] = cast(shared) load_objfile(("models/energy-star-"~i.to!(string)~".obj"));
+        }
+
+        for (int i=0; i < 5; i++)
+        {
+            models["fish-"~i.to!(string)] = cast(shared) load_objfile(("models/fish-"~i.to!(string)~".obj"));
+        }
+
+        for (int i=0; i < 11; i++)
+        {
+            models["squid-"~i.to!(string)] = cast(shared) load_objfile(("models/squid-"~i.to!(string)~".obj"));
+        }
+
+        for (int i=0; i < 4; i++)
+        {
+            models["flame-"~i.to!(string)] = cast(shared) load_objfile(("models/flame-"~i.to!(string)~".obj"));
+        }
+
+        for (int i=0; i < 6; i++)
+        {
+            models["grasshopper-"~i.to!(string)] = cast(shared) load_objfile(("models/grasshopper-"~i.to!(string)~".obj"));
         }
 
         collision_objects["solid"] = null;
-        scene_to_collision_object (models["solid"], collision_objects["solid"]);
+        scene_to_collision_object (cast(ObjFile*) models["solid"], collision_objects["solid"]);
         collision_objects["water"] = null;
-        scene_to_collision_object (models["water"], collision_objects["water"]);
+        scene_to_collision_object (cast(ObjFile*) models["water"], collision_objects["water"]);
         collision_objects["clouds"] = null;
-        scene_to_collision_object (models["clouds"], collision_objects["clouds"]);
+        scene_to_collision_object (cast(ObjFile*) models["clouds"], collision_objects["clouds"]);
         collision_objects["dangers"] = null;
-        scene_to_collision_object (models["dangers"], collision_objects["dangers"]);
+        scene_to_collision_object (cast(ObjFile*) models["dangers"], collision_objects["dangers"]);
         collision_objects["temp-solid"] = null;
-        scene_to_collision_object (models["temp-solid"], collision_objects["temp-solid"]);
+        scene_to_collision_object (cast(ObjFile*) models["temp-solid"], collision_objects["temp-solid"]);
 
-        models["bug-solid"] = load_objfile("models/bug-collisions.obj");
+        models.remove("solid");
+        models.remove("water");
+        models.remove("clouds");
+        models.remove("dangers");
+        models.remove("temp-solid");
+
+        models["bug-solid"] = cast(shared) load_objfile("models/bug-collisions.obj");
         collision_objects["bug-solid"] = null;
-        scene_to_collision_object (models["bug-solid"], collision_objects["bug-solid"]);
+        scene_to_collision_object (cast(ObjFile*) models["bug-solid"], collision_objects["bug-solid"]);
+
+        models["grasshopper-solid"] = cast(shared) load_objfile("models/grasshopper-collisions.obj");
+        collision_objects["grasshopper-solid"] = null;
+        scene_to_collision_object (cast(ObjFile*) models["grasshopper-solid"], collision_objects["grasshopper-solid"]);
+
+        models["grasshopper-solid-1"] = cast(shared) load_objfile("models/grasshopper-collisions-1.obj");
+        collision_objects["grasshopper-solid-1"] = null;
+        scene_to_collision_object (cast(ObjFile*) models["grasshopper-solid-1"], collision_objects["grasshopper-solid-1"]);
+
+        models["underground-solid"] = cast(shared) load_objfile("models/underground-collisions.obj");
+        collision_objects["underground-solid"] = null;
+        scene_to_collision_object (cast(ObjFile*) models["underground-solid"], collision_objects["underground-solid"]);
 
         collision_objects["solid"]["BranchForBreak"] = collision_objects["temp-solid"]["BranchForBreak"];
         collision_objects["solid"]["Platform1"] = collision_objects["temp-solid"]["Platform1"];
@@ -312,10 +576,12 @@ class DizzyOmega:MainGameObject
         collision_objects["solid"]["BeforeExplosure2"] = collision_objects["temp-solid"]["BeforeExplosure2"];
         collision_objects["solid"]["GroundGarden"] = collision_objects["temp-solid"]["GroundGarden"];
         collision_objects["solid"]["Stone2"] = collision_objects["temp-solid"]["Stone2"];
+        collision_objects["solid"]["Platform4"] = collision_objects["temp-solid"]["Platform4"];
+        collision_objects["solid"]["Wall1"] = collision_objects["temp-solid"]["Wall1"];
 
-        items = [new Item(this, [93.7, -4.9, 0.0], "kitchen-knife"),
-                 new Item(this, [223.1, 2.9, 0.0], "stone1"),
-                 new Item(this, [309.0, 34.5, 3.0], "fish-rod"),
+        items = [kitchen_knife = new Item(this, [93.7, -4.9, 0.0], "kitchen-knife"),
+                 stone1 = new Item(this, [223.1, 2.9, 0.0], "stone1"),
+                 fish_rod = new Item(this, [309.0, 34.5, 3.0], "fish-rod"),
                  branch = new Item(this, [330.0, 34.0, 0.0], "branch"),
                  light_branch = new Item(this, [390.0, 34.0, 0.0], "light-branch"),
                  player = new Item(this, [120.0, 34.0, 0.0], "player"),
@@ -323,18 +589,35 @@ class DizzyOmega:MainGameObject
                  baloon = new Item(this, [433.0, -22.0, 0.0], "baloon"),
                  stunning_drink = new Item(this, [450.0, 34.0, 0.0], "stunning-drink"),
                  bottle = new Item(this, [450.0, 34.0, 0.0], "bottle"),
-                 new Item(this, [511.5, -6.6, -2.6], "umbrella"),
+                 umbrella = new Item(this, [511.5, -6.6, -2.6], "umbrella"),
                  stone2 = new Item(this, [334.6, 34.0, 0.0], "stone2"),
+                 stone3 = new Item(this, [422.0, -98.4, 0.0], "stone3"),
                  bucket = new Item(this, [280.0, 34.0, 0.0], "bucket"),
                  bucket_of_water = new Item(this, [280.0, 34.0, 0.0], "bucket-of-water"),
                  bucket_of_ice = new Item(this, [280.0, 34.0, 0.0], "bucket-of-ice"),
                  bucket_covered = new Item(this, [280.0, 34.0, 0.0], "bucket-covered"),
+                 bucket_with_ground = new Item(this, [280.0, 34.0, 0.0], "bucket-with-ground"),
+                 bucket_with_light_water = new Item(this, [280.0, 34.0, 0.0], "bucket-with-light-water"),
                  blanket = new Item(this, [210.7, -6.4, 0.0], "blanket"),
                  meteorite = new Item(this, [150.0, 34.0, 0.0], "meteorite"),
                  spade = new Item(this, [390.0, 34.0, 0.0], "spade"),
                  short_rope = new Item(this, [360.0, 34.0, 0.0], "short-rope"),
                  new Item(this, [-30.1, -7.3, 0.0], "oiler"),
-                 new Item(this, [-40.6, -2.6, 0.0], "grenade"),];
+                 new Item(this, [-40.6, -2.6, 0.0], "grenade"),
+                 bag = new Item(this, [262.8, -57.5, 0.0], "bag"),
+                 grasshoppers_poison = new Item(this, [392.2, -99.0, 0.0], "grasshoppers-poison"),
+                 bugs_poison = new Item(this, [231.9, -71.9, 0.0], "bugs-poison"),
+                 key = new Item(this, [439.0, -72.7, 0.0], "key"),
+                 pressprot = new Item(this, [465.9, 34.0, 0.0], "pressure-protection"),
+                 new Item(this, [453.2, -116.0, 0.0], "dynamite-grand"),
+                 nettle = new Item(this, [20.5, 33.8, 0.0], "nettle"),
+                 grasshopper_item = new Item(this, [20.5, 80.0, 0.0], "grasshopper-0"),
+                 bird_item = new Item(this, [150.0, 80.0, 0.0], "bird-item"),
+                 bug_item = new Item(this, [150.0, 80.0, 0.0], "bug"),
+                 fish_item = new Item(this, [150.0, 80.0, 0.0], "fish-item"),
+                 squid_item = new Item(this, [150.0, 80.0, 0.0], "squid-item"),
+                 psychotropic_spray = new Item(this, [150.0, 80.0, 0.0], "psychotropic-spray"),
+                 whistle = new Item(this, [150.0, 80.0, 0.0], "whistle"),];
 
         stars = [new Star(this, [21.6, -3.0, 0.0]),
                  new Star(this, [84.3, -3.4, 0.0]),
@@ -350,7 +633,21 @@ class DizzyOmega:MainGameObject
                  new Star(this, [436.0, 5.0, 0.0]),
                  new Star(this, [466.4, 1.7, 0.0]),
                  new Star(this, [511.5, -6.6, 0.0]),
-                 new Star(this, [572.8, 1.5, 0.0]),];
+                 new Star(this, [572.8, 1.5, 0.0]),
+                 new Star(this, [277.5, -58.0, 0.0]),
+                 new Star(this, [244.8, -74.8, 0.0]),
+                 new Star(this, [245.5, -124.5, 0.0]),
+                 new Star(this, [242.2, -132.8, 0.0]),
+                 new Star(this, [402.2, -56.9, 0.0]),
+                 new Star(this, [419.8, -54.7, 0.0]),
+                 new Star(this, [427.8, -87.7, 0.0]),
+                 new Star(this, [353.7, -99.3, 0.0]),
+                 new Star(this, [347.3, -108.3, 0.0]),
+                 new Star(this, [460.7, -121.8, 0.0]),
+                 new Star(this, [444.7, -137.8, 0.0]),
+                 new Star(this, [484.7, -158.9, 0.0]),
+                 star1 = new Star(this, [29.9, 34.8, 0.0]),
+                 new Star(this, [22.9, 69.8, 0.0]),];
 
         trees = [new Tree(this, 2.7, [4.0, -7.5, 0.7], 0),
                  new Tree(this, 2.47, [97.7, -2.7, 0.7], 1),
@@ -379,7 +676,7 @@ class DizzyOmega:MainGameObject
                       new Stone02(this, the_hero),
                       new SkyZaks(this, the_hero),
                       new Stalagmite(this, the_hero),
-                      new Meteorite(this, the_hero, rnd),
+                      new Meteorite(this, the_hero, bird, rnd),
                       new LightDrop(this),
                       new Drop(this, 197.4, 2.1, 1.8, -6.2, -1.6, 0),
                       new Drop(this, 305.5, 8.4, 8.3, 5.1, 3.9, 0),
@@ -393,18 +690,48 @@ class DizzyOmega:MainGameObject
                       new Drop(this, 458.9, -2.8, -3.0, -6.3, 1.9, 220),
                       new Drop(this, 460.6, -2.8, -3.0, -6.3, 1.9, 120),
                       new Drop(this, 461.6, -2.8, -3.0, -6.3, 1.9, 180),
+                      new Drop(this, 308.6, -48.5, -48.8, -55.2, 2.1, 0),
+                      new Drop(this, 298.0, -48.0, -48.2, -55.2, 2.1, 100),
+                      new Drop(this, 291.7, -48.3, -48.6, -55.2, 2.1, 87),
+                      new Drop(this, 273.5, -46.6, -46.8, -55.2, 2.1, 24),
+                      new Drop(this, 267.0, -48.0, -48.3, -55.2, 2.1, 250),
+                      new Drop(this, 260.4, -50.1, -50.5, -55.2, 2.1, 180),
                       new FallPlatform(this, the_hero, [247.3, 2.1, 0.0], 0),
-                      new Bug(this, [252.0, -5.6, 0.0], "bug-solid"),
+                      bug = new Bug(this, [252.0, -5.6, 0.0], "bug-solid"),
+                      grasshopper = new Grasshopper(this, [20.6, 60.5, 0.0], "grasshopper-solid", "grasshopper-solid-1", the_hero),
                       dog = new Dog(this, [362.0, -3.5, 0.0], [359.5, -2.4, 3.0], -5.1, 20, 0.5, the_hero),
                       martian_engineer = new Rotatable(this, [401.8, 2.7, 0.0], 90.0, "martian-engineer"),
                       new Rotatable(this, [463.2, 1.7, 2.1], 0.0, "martian-chemist"),
                       new Platform1(this, [418.5, 4.6, 0.0]),
                       explosure = new Explosure(this, [416.4, -20.7, 0.0], [425.4, -16.7, 0.0], [412.4, -20.5, 0.0], the_hero),
                       bucket_anim = new Bucket(this),
-                      ground_garden = new GroundGarden(this),];
+                      ground_garden = new GroundGarden(this),
+                      stones = new Stones(this),
+                      bird = new Bird(this, [318.7, -36.2, 0.0], 332.7, the_hero),
+                      new Fish(this, [232.8, -85.9, 0.0], 232.8, 240.8, 1.0, 1.0),
+                      new Fish(this, [348.4, -106.0, 0.0], 348.4, 366.9, 0.5, 1.0),
+                      new Fish(this, [352.0, -106.0, 0.0], 348.4, 366.9, 0.7, 0.8),
+                      fish = new Fish(this, [366.9, -106.0, 0.0], 348.4, 366.9, 0.4, 1.2),
+                      new Fish(this, [459.0, -149.5, 4.0], 450.0, 468.0, 1.5, 0.25),
+                      squid = new Squid(this, [276.0, -113.0, 0.0], -120.0),
+                      new Water(this, "cave-water", -55.5),
+                      new Water(this, "cave-water-2", -106.01),
+                      water3 = new Water(this, "cave-water-3", -160.0),
+                      new Statical(this, "aquarium"),
+                      door = new Rotatable(this, [17.3, 2.0, 2.0], 0.0, "door"),
+                      new Flame(this, [458.5, -157.3, 1.0], 0),
+                      new Flame(this, [451.8, -157.3, 1.0], 2),
+                      new Lava(this, [422.3, -125.4, -2.5], [429.3, -124.4, 2.5], rnd),
+                      new Platform4(this, [29.6, 34.4, 0.0]),
+                      ground_cave = new GroundCave(this),
+                      ground_castle = new GroundCastle(this),
+                      zaks = new Rotatable(this, [489.0, -159.1, 0.0], 0.0, "zaks"),
+                      things_sweep_away_zaks = new ThingsSweepAwayZaks(this),
+                      ];
 
         rope1 = new Rope(root, [418.1, 1.3, 0.7], [416.9, 1.3, 0.0], -13.0, 30, 0.5, 3);
         rope2 = new Rope(root, [245.0, 2.2, 0.7], [246.2, 2.2, 0.0], -5.0, 7, 0.5, 3);
+        rope3 = new Rope(root, [331.2, -13.7, 0.7], [333.0, -13.7, 0.0], -53.1, 70, 0.5, 3);
         
         textures["live"] = load_texture("models/dizzy/dizzy-live.png");
         textures["energy"] = load_texture("models/dizzy/energy.png");
@@ -415,6 +742,7 @@ class DizzyOmega:MainGameObject
             "blanket": "Quilted Blanket",
             "stone1": "Stone",
             "stone2": "Stone",
+            "stone3": "Stone",
             "fish-rod": "Fish Rod",
             "branch": "Branch",
             "light-branch": "Light Branch",
@@ -428,11 +756,26 @@ class DizzyOmega:MainGameObject
             "bucket-of-water": "Bucket Of Water",
             "bucket-of-ice": "Bucket Of Ice",
             "bucket-covered": "Covered Bucket of Water",
+            "bucket-with-ground": "Bucket with ground",
+            "bucket-with-light-water": "Bucket with light water",
             "meteorite": "Meteorite",
             "spade": "Spade",
             "short-rope": "Short Rope",
             "oiler": "Oiler",
             "grenade": "Hand Grenade",
+            "grasshoppers-poison": "Grasshopper Poison",
+            "bugs-poison": "Bug Poison",
+            "key": "Key",
+            "pressure-protection": "Pressure Protection",
+            "dynamite-grand": "Dynamite Grand",
+            "nettle": "Nettle",
+            "grasshopper-0": "Grasshopper",
+            "bird-item": "Bird",
+            "bug": "Bug",
+            "fish-item": "Fish",
+            "squid-item": "Squid",
+            "psychotropic-spray": "Psychotropic Spray",
+            "whistle": "Whistle",
         ];
 
         names_ru =
@@ -441,6 +784,7 @@ class DizzyOmega:MainGameObject
             "blanket": "Ватное Одеяло",
             "stone1": "Камень",
             "stone2": "Камень",
+            "stone3": "Камень",
             "fish-rod": "Удочка",
             "branch": "Ветка",
             "light-branch": "Сияющая ветка",
@@ -454,67 +798,26 @@ class DizzyOmega:MainGameObject
             "bucket-of-water": "Ведро воды",
             "bucket-of-ice": "Ведро льда",
             "bucket-covered": "Накрытое Ведро с Водой",
+            "bucket-with-ground": "Ведро с землёй",
+            "bucket-with-light-water": "Ведро с сияющей водой",
             "meteorite": "Метеорит",
             "spade": "Лопата",
             "short-rope": "Короткая Верёвка",
             "oiler": "Маслёнка",
             "grenade": "Ручная Граната",
-        ];
-
-        screen_names =
-        [
-            SC(-1,0): "Entrance to cave",
-            SC(0, 0): "The landing place",
-            SC(1, 0): "The cave of light tree",
-            SC(2, 0): "The valley of death",
-            SC(3, 0): "The valley of death",
-            SC(4, 0): "The martian well",
-            SC(5, 0): "Under the open sky of Mars",
-            SC(6, 0): "Entrance to the cave of an extinct volcano",
-            SC(7, 0): "In the cave",
-            SC(8, 0): "In the cave",
-            SC(9, 0): "The first Martian",
-            SC(10,0): "Farmstead of the agronomist",
-            SC(10,2): "Barn of the agronomist",
-            SC(11,0): "Garden",
-            SC(12,0): "Entrance to the secret laboratory",
-            SC(13,0): "The engineer",
-            SC(14,0): "Muzzle of the volcano",
-            SC(14,-1): "Muzzle of the volcano",
-            SC(15,0): "Chemical laboratory",
-            SC(16,0): "Cave corridor",
-            SC(17,0): "Corridor in the cave",
-            SC(18,0): "Exit from the cave of volcano",
-            SC(19,0): "Walls of the castle",
-            SC(19,1): "Walls of the castle",
-        ];
-
-        screen_names_ru =
-        [
-            SC(-1,0): "Вход в пещеру",
-            SC(0, 0): "Место посадки",
-            SC(1, 0): "Пещера сияющего дерева",
-            SC(2, 0): "Долина смерти",
-            SC(3, 0): "Долина смерти",
-            SC(4, 0): "Марсианский колодец",
-            SC(5, 0): "Под открытым небом Марса",
-            SC(6, 0): "Вход в пещеру потухшего вулкана",
-            SC(7, 0): "В пещере",
-            SC(8, 0): "В пещере",
-            SC(9, 0): "Первый марсианин",
-            SC(10,0): "Усадьба агронома",
-            SC(10,2): "Сарай агронома",
-            SC(11,0): "Сад",
-            SC(12,0): "Вход в секретную лабораторию",
-            SC(13,0): "Инженер",
-            SC(14,0): "Жерло вулкана",
-            SC(14,-1): "Жерло вулкана",
-            SC(15,0): "Химическая лаборатория",
-            SC(16,0): "Пещерный коридор",
-            SC(17,0): "Коридор пещерный",
-            SC(18,0): "Выход из пещеры вулкана",
-            SC(19,0): "Стены замка",
-            SC(19,1): "Стены замка",
+            "grasshoppers-poison": "Отрава для кузнечиков",
+            "bugs-poison": "Отрава для жуков",
+            "key": "Ключ",
+            "pressure-protection": "Защита от давления",
+            "dynamite-grand": "Динамит большой",
+            "nettle": "Сачок",
+            "grasshopper-0": "Кузнечик",
+            "bird-item": "Птичка",
+            "bug": "Жук",
+            "fish-item": "Рыба",
+            "squid-item": "Кальмар",
+            "psychotropic-spray": "Психотропный Препарат",
+            "whistle": "Свисток",
         ];
 
         temp_messages =
@@ -546,16 +849,6 @@ class DizzyOmega:MainGameObject
         else
             throw new Exception(format("Error while aiImportFile"));*/
 
-        scene_list = glGenLists(1);
-        if (scene_list <= 0)
-            throw new Exception(format("Error while glGenLists: %s", scene_list));
-        glNewList(scene_list, GL_COMPILE);
-        recursive_render(gs, models["scene"], null, null, true, true);
-        glEndList();
-
-        models["scene"] = null;
-        GC.collect();
-
         energy_minus = Mix_LoadMUS("sounds/energy-minus.ogg");
         if(!energy_minus) {
             writefln("Mix_LoadMUS 'sounds/energy_minus.ogg': %s", Mix_GetError().to!(string)());
@@ -566,13 +859,48 @@ class DizzyOmega:MainGameObject
             writefln("Mix_LoadMUS 'sounds/energy_plus.ogg': %s", Mix_GetError().to!(string)());
         }
 
-        music1 = Mix_LoadMUS("music/GraveBeholders_TheSadnessOfMyWorld.ogg");
-        if(!music1) {
+        musics = [null, null, null, null, null];
+        music_len = [0.0f, 0.0f, 0.0f, 0.0f, 0.0f];
+        music_name = ["", "", "", "", ""];
+
+        musics[0] = Mix_LoadMUS("music/GraveBeholders_TheSadnessOfMyWorld.ogg");
+        if(!musics[0]) {
             writefln("Mix_LoadMUS 'music/GraveBeholders_TheSadnessOfMyWorld.ogg': %s", Mix_GetError().to!(string)());
         }
-        music1_len = 632.0;
+        music_len[0] = 632.0;
+        music_name[0] = "Grave Beholders: The Sadness Of My World";
+
+        musics[1] = Mix_LoadMUS("music/SergeySirotin_Magic.ogg");
+        if(!musics[1]) {
+            writefln("Mix_LoadMUS 'music/SergeySirotin_Magic.ogg': %s", Mix_GetError().to!(string)());
+        }
+        music_len[1] = 232.6;
+        music_name[1] = "Sergey Sirotin: Magic";
+
+        musics[2] = Mix_LoadMUS("music/OlegGurtovoy_FreeFlight.ogg");
+        if(!musics[2]) {
+            writefln("Mix_LoadMUS 'music/OlegGurtovoy_FreeFlight.ogg': %s", Mix_GetError().to!(string)());
+        }
+        music_len[2] = 234.2;
+        music_name[2] = "Oleg Gurtovoy: Free Flight";
+
+        musics[3] = Mix_LoadMUS("music/PaulWhite_ViolinQuartet.ogg");
+        if(!musics[3]) {
+            writefln("Mix_LoadMUS 'music/PaulWhite_ViolinQuartet.ogg': %s", Mix_GetError().to!(string)());
+        }
+        music_len[3] = 206.5;
+        music_name[3] = "Paul White: Violin Quartet";
+
+        musics[4] = Mix_LoadMUS("music/SergeySirotin_NightCity.ogg");
+        if(!musics[4]) {
+            writefln("Mix_LoadMUS 'music/SergeySirotin_NightCity.ogg': %s", Mix_GetError().to!(string)());
+        }
+        music_len[4] = 249.8;
+        music_name[4] = "Sergey Sirotin: Night City";
 
         music_start_tick = cast(long)SDL_GetTicks();
+
+        music = true;
 
         super(this);
 
@@ -659,6 +987,15 @@ class DizzyOmega:MainGameObject
 
     void toGame(GlobalState gs)
     {
+        if (sl_tid == Tid.init)
+        {
+            sl_tid = spawn(&scene_loader, &screens,
+                &screen_names,
+                cast(int) round(scrx/30.0),
+                cast(int) round(scry/17.0),
+                5, thisTid);
+        }
+        
         SDL_SetRenderTarget(gs.renderer, null);
         initViewPort(gs.screen.w+32*6, gs.screen.h);
         glEnable(GL_DEPTH_TEST);
@@ -668,7 +1005,7 @@ class DizzyOmega:MainGameObject
 
         if (music)
         {
-            if (Mix_PlayMusic(music1, -1) == -1)
+            if (Mix_PlayMusic(musics[track], -1) == -1)
             {
                 writefln("Mix_PlayMusic: %s",
                     Mix_GetError().to!(string)());
@@ -676,17 +1013,23 @@ class DizzyOmega:MainGameObject
     
             if(Mix_SetMusicPosition((
                 (SDL_GetTicks() - music_start_tick)/1000.0)%
-                music1_len) == -1) {
+                music_len[track]) == -1) {
                 writefln("Mix_SetMusicPosition: %s\n",
                     Mix_GetError().to!(string)());
             }
+            
+            print_message(TEMP_MESSAGES.PLAYS, " "~music_name[track]);       
         }
-
-        print_message(TEMP_MESSAGES.PLAYS, " Grave Beholders: The Sadness Of My World");       
     }
 
     void fromGame(GlobalState gs)
     {
+        if (sl_tid != Tid.init)
+        {
+            sl_tid.send(true);
+            sl_tid = Tid.init;
+        }
+        
         glDisable(GL_DEPTH_TEST);
         glDisable(GL_CULL_FACE);
         glMatrixMode(GL_MODELVIEW);
@@ -730,6 +1073,16 @@ class DizzyOmega:MainGameObject
 
     int draw_tree;
 
+    bool all_items_in_the_castle()
+    {
+        Item[] items = [kitchen_knife, player, baloon, umbrella, stone1, stone2, bucket, blanket, spade, whistle];
+        foreach (item; items)
+        {
+            if (!item.in_the_castle) return false;
+        }
+        return true;
+    }
+
     override void draw(GlobalState gs)
     {
         float tmp;
@@ -772,11 +1125,47 @@ class DizzyOmega:MainGameObject
                  cast(float)(0.065f + 0.03*sin(cast(float)frame/50)),
                  cast(float)(0.065f + 0.03*cos(cast(float)frame/50)),
                  1.0f].ptr);
+            glLighti(GL_LIGHT2, GL_QUADRATIC_ATTENUATION, 1);
         }
         else
         {
             glDisable(GL_LIGHT2);
-        }            
+        }
+
+        SC sc = SC(cast(int)round(scrx/30), cast(int)round(scry/17));
+
+        /* Underground */
+        if (sc.y < 0 && sc.x >= 8 && sc.x <= 14 &&
+            !(sc.x == 14 && sc.y == -1) || sc.x == 15 && sc.y == -4)
+        {
+            if (sc.y == -1)
+            {
+                glEnable(GL_LIGHT0);
+                glLightModelfv(GL_LIGHT_MODEL_AMBIENT, [0.0f, 0.0f, 0.0f, 1.0f].ptr);
+    
+                glLightfv(GL_LIGHT0, GL_POSITION, [0f, 15f, 5.0f, 1.0f].ptr);
+                glLightfv(GL_LIGHT0, GL_SPOT_DIRECTION, [0.0f, 0.5f, -0.1f].ptr);
+                glLighti(GL_LIGHT0, GL_SPOT_EXPONENT, 90);
+                glLighti(GL_LIGHT0, GL_SPOT_CUTOFF, 180);
+                glLighti(GL_LIGHT0, GL_CONSTANT_ATTENUATION, 0);
+                glLighti(GL_LIGHT0, GL_QUADRATIC_ATTENUATION, 3);
+            }
+            else
+            {
+                glDisable(GL_LIGHT0);
+            }
+        }
+        else
+        {
+            glEnable(GL_LIGHT0);
+            glLightModelfv(GL_LIGHT_MODEL_AMBIENT, [0.2f, 0.2f, 0.2f, 1.0f].ptr);
+            glLightfv(GL_LIGHT0, GL_POSITION, [-75f, -75f, 150.0f, 1.0f].ptr);
+            glLightfv(GL_LIGHT0, GL_SPOT_DIRECTION, [0.5f, 0.5f, -1.0f].ptr);
+            glLighti(GL_LIGHT0, GL_SPOT_EXPONENT, 64);
+            glLighti(GL_LIGHT0, GL_SPOT_CUTOFF, 90);
+            glLighti(GL_LIGHT0, GL_CONSTANT_ATTENUATION, 1);
+            glLighti(GL_LIGHT0, GL_QUADRATIC_ATTENUATION, 0);
+        }
 
         //Sky
         glEnable(GL_COLOR_MATERIAL);
@@ -799,6 +1188,29 @@ class DizzyOmega:MainGameObject
         glPushMatrix();
         glTranslatef(-scrx, -scry, 0.0);
 
+        /* Underground */
+        if (sc.y < 0 && sc.x >= 8 && sc.x <= 14 &&
+            !(sc.x == 14 && sc.y == -1) || sc.x == 15 && sc.y == -4)
+        {
+            glEnable(GL_LIGHT2);
+            glLightModelfv(GL_LIGHT_MODEL_AMBIENT, [0.0f, 0.0f, 0.0f, 1.0f].ptr);
+            glLightfv(GL_LIGHT2, GL_DIFFUSE,
+                [0.3f,
+                 cast(float)(0.365f + 0.15*sin(cast(float)frame/50)),
+                 cast(float)(0.365f + 0.15*cos(cast(float)frame/50)),
+                 1.0f].ptr);
+            glLightf(GL_LIGHT2, GL_QUADRATIC_ATTENUATION, 0.25f);
+
+            if (light_branch.inventory)
+            {
+                glLightfv(GL_LIGHT2, GL_POSITION, [the_hero.x, the_hero.y+1.5f, the_hero.z+8.0f, 1.0f].ptr);
+            }
+            else
+            {
+                glLightfv(GL_LIGHT2, GL_POSITION, [light_branch.x, light_branch.y+.5f, light_branch.z+8.0f, 1.0f].ptr);
+            }
+        }
+
         the_hero.draw(gs);
 
         foreach(star; stars)
@@ -808,17 +1220,52 @@ class DizzyOmega:MainGameObject
 
         stars[0].force_draw(gs);
 
-        if (the_hero.show_sensors)
+        /*if (the_hero.show_sensors)
             recursive_render(gs, models["solid"]);
-        else
+        else*/
         {
-            //recursive_render(gs, models["scene"], null, null, [scrx-16, scry-10, -10, scrx+16, scry+10, 10]);
-            glCallList(scene_list);
+            if (sc !in screen_lists)
+            {
+                if (sc !in screens)
+                {
+                    loadingMessage(gs);
+                    return;
+                }
+                
+                screen_lists[sc] = glGenLists(1);
+                if (screen_lists[sc] <= 0)
+                    throw new Exception(format("Error while glGenLists: %s", screen_lists[sc]));
+                glNewList(screen_lists[sc], GL_COMPILE_AND_EXECUTE);
+                recursive_render(gs, screens[sc], null, null, true, sc.y >= 0);
+                glEndList();
+    
+                screens[sc] = null;
+    
+                foreach(scc; screen_lists.keys())
+                {
+                    if (scc !in screens)
+                    {
+                        glDeleteLists(screen_lists[scc], 1);
+                        screen_lists.remove(scc);
+                    }
+                }
+    
+                //writefln("%s", GC.stats());
+            }
+            else
+            {
+                glCallList(screen_lists[sc]);
+            }
         }
 
         foreach(tree; trees)
         {
             tree.draw(gs);
+        }
+
+        foreach (ref item; items)
+        {
+            item.draw(gs);
         }
 
         foreach(anim; animations)
@@ -914,11 +1361,6 @@ class DizzyOmega:MainGameObject
             glPopMatrix();
         }
 
-        foreach (ref item; items)
-        {
-            item.draw(gs);
-        }
-
         if (scrx == 0.0 && scry == 0.0)
         {
             glPushMatrix();
@@ -936,6 +1378,9 @@ class DizzyOmega:MainGameObject
                 break;
             case 2:
                 rope2.draw(gs);
+                break;
+            case 3:
+                rope3.draw(gs);
                 break;
             default:
                 assert(0);
@@ -1089,6 +1534,10 @@ class DizzyOmega:MainGameObject
     
     override bool tick(GlobalState gs)    
     {
+        SC sc = SC(cast(int)round(scrx/30), cast(int)round(scry/17));
+        if (sc in screen_names && sc !in screen_lists && sc !in screens)
+            return true;
+        
         if (slow >= 0)
         {
             slow++;
@@ -1160,7 +1609,7 @@ class DizzyOmega:MainGameObject
                 {
                     if (music)
                     {
-                        if (Mix_PlayMusic(music1, -1) == -1)
+                        if (Mix_PlayMusic(musics[track], -1) == -1)
                         {
                             writefln("Mix_PlayMusic: %s",
                                 Mix_GetError().to!(string)());
@@ -1168,7 +1617,7 @@ class DizzyOmega:MainGameObject
                 
                         if(Mix_SetMusicPosition((
                             (SDL_GetTicks() - music_start_tick)/1000.0)%
-                            music1_len) == -1) {
+                            music_len[track]) == -1) {
                             writefln("Mix_SetMusicPosition: %s\n",
                                 Mix_GetError().to!(string)());
                         }
@@ -1305,6 +1754,24 @@ class DizzyOmega:MainGameObject
                 state = STATE.NO_DIALOGS;
             }
         }
+        if (state == STATE.THINGS_SWEEP_AWAY_ZAKS_ANIM)
+        {
+            if (!paused)
+            {
+                frame++;
+                things_sweep_away_zaks.tick(gs);
+                water3.tick(gs);
+
+                if (things_sweep_away_zaks.frame > 600)
+                {
+                    stones.frame = frame;
+                    stones.tick(gs);
+                    stone3.x = 413.4;
+                    stone3.y = -84.3;
+                    state++;
+                }
+            }
+        }
         else if (state != STATE.NO_DIALOGS)
         {
             if (the_hero.energy <= 0.0)
@@ -1314,16 +1781,17 @@ class DizzyOmega:MainGameObject
         {
             //degrees += 1.0;
             frame++;
+            if (things_sweep_away_zaks.frame > 1700) things_sweep_away_zaks.hide();
 
             the_hero.tick(gs);
 
             if (the_hero.energy <= 0.0)
             {
-                if (the_hero.killed_by.startsWith("Stalactite."))
+                if (the_hero.killed_by.startsWith("Stalactite"))
                 {
                     state = STATE.PIERCED_BY_STALACTITE;
                 }
-                else if (the_hero.killed_by.startsWith("Stalagmite."))
+                else if (the_hero.killed_by.startsWith("Stalagmite"))
                 {
                     state = STATE.PIERCED_BY_STALAGMITE;
                 }
@@ -1347,6 +1815,14 @@ class DizzyOmega:MainGameObject
                 {
                     state = STATE.HIT_BY_ROCK;
                 }
+                else if (the_hero.killed_by.startsWith("Flame"))
+                {
+                    state = STATE.BURNED_IN_FLAME;
+                }
+                else if (the_hero.killed_by.startsWith("Pressure"))
+                {
+                    state = STATE.CRUSHED_BY_PRESSURE;
+                }
                 else
                 {
                     assert(0, format("Unknown danger object: %s", the_hero.killed_by));
@@ -1358,6 +1834,21 @@ class DizzyOmega:MainGameObject
                 martian_engineer.z == 0.0)
             {
                 state = STATE.MARTIAN_ENGINEER_GET_AWAY;
+            }
+
+            if (zaks.y == zaks.def_y &&
+                the_hero.x > zaks.x - 2.0 &&
+                the_hero.y > zaks.y - 0.5 &&
+                the_hero.y < zaks.y + 10.5)
+            {
+                the_hero.x = zaks.x - 2.0;
+            }
+
+            // Location: Water near Zaks
+            if ( 478.5 < the_hero.x && the_hero.x < 483.6 &&
+                 the_hero.y < -162.0 )
+            {
+                the_hero.y = -162.0;
             }
 
             // Location: In the bam
@@ -1421,6 +1912,10 @@ class DizzyOmega:MainGameObject
                     the_hero.rope = rope2;
                     rope2.tick(gs);
                     break;
+                case 3:
+                    the_hero.rope = rope3;
+                    rope3.tick(gs);
+                    break;
                 default:
                     assert(0);
             }
@@ -1445,7 +1940,7 @@ class DizzyOmega:MainGameObject
                     {
                         bucket_covered.inventory = false;
                         bucket_covered.used = true;
-                        item_num++;
+                        item_num += 3;
                         break;
                     }
                 }
@@ -1463,7 +1958,47 @@ class DizzyOmega:MainGameObject
                 bucket.z = the_hero.z;
             }
 
-            float oldscrx = scrx;
+            if (abs(scrx - 330.0f) < 1.0f && abs(scry + 17.0f) < 1.0f && track == 0)
+            {
+                track = 1;
+                music_start_tick = cast(long)SDL_GetTicks();
+                play_music();
+            }
+
+            // Location: Dangerous deep
+            if (abs(scrx - 240.0f) < 1.0f && abs(scry + 85.0f) < 1.0f)
+            {
+                if (!pressprot.inventory)
+                {
+                    the_hero.energy = min(the_hero.energy, (the_hero.y + 93.0f)/16.0f*100.0f);
+                    if (the_hero.energy <= 0.0)
+                    {
+                        the_hero.die("Pressure");
+                    }
+                }
+            }
+
+            // Location: And can not see the bottom
+            if (abs(scrx - 240.0f) < 1.0f && abs(scry + 136.0f) < 1.0f)
+            {
+                the_hero.energy = min(the_hero.energy, (the_hero.y + 144.0f)/10.0f*100.0f);
+                if (the_hero.energy <= 0.0)
+                {
+                    the_hero.die("Pressure");
+                }
+            }
+
+            // Location: The mine
+            if (abs(scrx - 330.0f) < 1.0f && abs(scry + 34.0f) < 1.0f &&
+                grasshopper_item.inventory && bird.fly == 0)
+            {
+                bird.start_fly();
+                track = 2;
+                music_start_tick = cast(long)SDL_GetTicks();
+                play_music();
+            }
+
+            float oldscrx = scrx, oldscry = scry;
 
             while (the_hero.x-scrx > 15.0)
             {
@@ -1485,19 +2020,36 @@ class DizzyOmega:MainGameObject
                 scry -= 17.0;
             }
 
-            if (abs(scrx - 360.0) < 1.0 && abs(scry + 17.0) < 1.0 ||
-                scrx > 389.0 && scrx < 451.0 && abs(scry + 34.0) < 1.0 ||
-                abs(scrx - 480.0) < 1.0 && abs(scry + 17.0) < 1.0)
-            {
-                scry += 17.0;
-            }
-
-            if ( abs(scrx - 330.0) < 1.0 && abs(scry + 17.0) < 1.0 )
+            if ( abs(scrx - 510.0) < 1.0 && abs(scry + 153.0) < 1.0 )
             {
                 the_hero.force_dx = -0.15;
                 the_hero.dy = the_hero.JUMP_V;
+                if (the_hero.lives < 0) the_hero.lives = 0;
                 state = state.TO_BE_CONTINUED_MESSAGE;
-                scry += 17.0;
+                scrx -= 30.0;
+            }
+
+            sc = SC(cast(int)round(scrx/30), cast(int)round(scry/17));
+            if (sc !in screen_names)
+            {
+                scrx = oldscrx;
+                scry = oldscry;
+            }
+
+            if ( (oldscrx != scrx || oldscry != scry) &&
+                  abs(scrx - 15*30.0) < 1.0 && abs(scry + 7*17.0) < 1.0 &&
+                  track == 4 &&
+                  all_items_in_the_castle() && rope.in_the_castle() )
+            {
+                track = 3;
+                music_start_tick = cast(long)SDL_GetTicks();
+                play_music();
+            }
+
+            if (oldscrx != scrx || oldscry!=scry)
+            {
+                sl_tid.send(cast(int) round(scrx/30.0),
+                    cast(int) round(scry/17.0));
             }
 
             if (explosure.frame >= 0 && abs(scrx - 420.0) < 1.0 &&
@@ -1510,6 +2062,11 @@ class DizzyOmega:MainGameObject
                 oldscrx < 149 && scrx > 149)
             {
                 wait_meteorite = 0;
+            }
+
+            if (wait_meteorite2 < 0 && bird.x < 170.0)
+            {
+                wait_meteorite2 = 0;
             }
 
             if (bucket_of_water.inventory && abs(scrx - 360.0) < 1.0 &&
@@ -1603,6 +2160,10 @@ class DizzyOmega:MainGameObject
             inv_num--;
             if (inv_num < -1) inv_num = cast(int)(inventory.length-1);
         }
+        else if (!(keys & UP_KEY))
+        {
+            the_hero.start_jump(gs);
+        }
         
         keys |= UP_KEY;
     }
@@ -1641,8 +2202,8 @@ class DizzyOmega:MainGameObject
     void switch_slow(GlobalState gs)
     {
         if (keys & CTRL_KEY) return save(gs);
-        /*if (slow >= 0) slow = -1;
-        else slow = 0;*/
+        if (slow >= 0) slow = -1;
+        else slow = 0;
     }
 
     void switch_sensors(GlobalState gs)
@@ -1694,11 +2255,27 @@ class DizzyOmega:MainGameObject
                     }
                 }
 
+                if (bag.maybe_taken(gs, the_hero))
+                {
+                    max_items = 5;
+                    bag.used = true;
+                    state = STATE.BAG_FOUND;
+                    break switch_label;
+                }
+
+                bool stone_place = abs(the_hero.x-242.6) < 3.0 &&
+                        abs(the_hero.y+5.0) < 0.5;
+                bool stone_in_inventory = stone_place && (stone1.inventory || stone2.inventory);
+                bool bug_place = abs(the_hero.x-242.6) < 3.0 &&
+                        abs(the_hero.y+5.0) < 0.5;
+
                 foreach(i, ref item; items)
                 {
-                    if (item.maybe_taken(gs, the_hero))
+                    if (item.maybe_taken(gs, the_hero) && 
+                        (item.model != "stone1" && 
+                            item.model != "stone2" || !stone_in_inventory))
                     {
-                        if (inventory.length >= 3)
+                        if (inventory.length >= max_items)
                         {
                             state = STATE.TOO_MANY_ITEMS;
                             break switch_label;
@@ -1760,7 +2337,7 @@ class DizzyOmega:MainGameObject
                     }
 
                     if ((light_branch.inventory ||
-                        light_branch.def_x != light_branch.x &&
+                        light_branch.def_x != light_branch.x ||
                         light_branch.def_y != light_branch.y) &&
                         "Martian_Engineer_Gives_Spade" !in done_dialogs)
                     {
@@ -1768,6 +2345,50 @@ class DizzyOmega:MainGameObject
                         state = STATE.MARTIAN_ENGINEER_GIVES_SPADE;
                         break switch_label;
                     }
+
+                    if (squid_item.used && bird_item.used &&
+                        "Martian_Engineer_Returns_Bucket" !in done_dialogs)
+                    {
+                        done_dialogs["Martian_Engineer_Returns_Bucket"] = true;
+                        state = STATE.MARTIAN_ENGINEER_RETURNS_BUCKET;
+                        break switch_label;
+                    }
+
+                    if (bug.sprayed && grasshopper.sprayed &&
+                        whistle.def_x == whistle.x &&
+                        whistle.def_y == whistle.y)
+                    {
+                        state = STATE.MARTIAN_ENGINEER_GIVES_WHISTLE;
+                        break switch_label;
+                    }
+                }
+
+                // Location: Door in the cave of light tree (Outdoor)
+                if (key.used && abs(the_hero.x-16.5) < 1.5 && abs(the_hero.y-0.7) < 0.5 && !the_hero.jump)
+                {
+                    the_hero.y = 26.8;
+                    break switch_label;
+                }
+
+                // Location: Door in the cave of light tree (Indoor)
+                if (abs(the_hero.x-16.5) < 1.5 && abs(the_hero.y-26.8) < 0.5 && !the_hero.jump)
+                {
+                    the_hero.y = 0.7;
+                    break switch_label;
+                }
+
+                // Location: Door in the undercave (Outdoor)
+                if (abs(the_hero.x-36.2) < 1.5 && abs(the_hero.y-34.9) < 0.5 && !the_hero.jump)
+                {
+                    the_hero.y = 68.9;
+                    break switch_label;
+                }
+
+                // Location: Door in the undercave (Indoor)
+                if (abs(the_hero.x-36.2) < 1.5 && abs(the_hero.y-68.9) < 0.5 && !the_hero.jump)
+                {
+                    the_hero.y = 34.9;
+                    break switch_label;
                 }
 
                 // Location: Door of bam (Outdoor)
@@ -1798,7 +2419,7 @@ class DizzyOmega:MainGameObject
                 if (dizzy_used_knife_quest_state == 2 && 
                     abs(the_hero.x-327.0) < 1.5 && abs(the_hero.y+6.0) < 0.5 && !the_hero.jump)
                 {                                                        
-                    if (inventory.length >= 3)
+                    if (inventory.length >= max_items)
                     {
                         state = STATE.TOO_MANY_ITEMS;
                         break switch_label;
@@ -1826,7 +2447,7 @@ class DizzyOmega:MainGameObject
                     {
                         if (item.model == "rope")
                         {
-                            if (inventory.length >= 3)
+                            if (inventory.length >= max_items)
                             {
                                 state = STATE.TOO_MANY_ITEMS;
                                 break switch_label;
@@ -1851,7 +2472,32 @@ class DizzyOmega:MainGameObject
                     {
                         if (item.model == "rope")
                         {
-                            if (inventory.length >= 3)
+                            if (inventory.length >= max_items)
+                            {
+                                state = STATE.TOO_MANY_ITEMS;
+                                break switch_label;
+                            }
+                            
+                            state = STATE.DIZZY_UNTIED_ROPE_MESSAGE;
+                            inventory ~= i;
+                            item.inventory = true;
+                            item.used = false;
+                    
+                            break switch_label;
+                        }
+                    }
+                }
+
+                // Location : Danger sign underground
+                if (rope_state == 3 &&
+                    abs(the_hero.x-331.2) < 1.5 &&
+                    abs(the_hero.y+14.0) < 0.5 && !the_hero.jump)
+                {
+                    foreach(i, ref item; items)
+                    {
+                        if (item.model == "rope")
+                        {
+                            if (inventory.length >= max_items)
                             {
                                 state = STATE.TOO_MANY_ITEMS;
                                 break switch_label;
@@ -1879,13 +2525,13 @@ class DizzyOmega:MainGameObject
                     {
                         if (item.model == "short-rope")
                         {
-                            if (inventory.length >= 3)
+                            if (inventory.length >= max_items)
                             {
                                 state = STATE.TOO_MANY_ITEMS;
                                 break switch_label;
                             }
                             
-                            state = STATE.DIZZY_UNTIED_ROPE_MESSAGE;
+                            state = STATE.DIZZY_UNTIED_SHORT_ROPE_MESSAGE;
                             inventory ~= i;
                             item.inventory = true;
                             item.used = false;
@@ -1896,7 +2542,6 @@ class DizzyOmega:MainGameObject
                     }
                 }
 
-
                 // Location: Martian-Chemist
                 if (abs(the_hero.x-463.2) < 2.6 && abs(the_hero.y-1.7) < 0.5 && !the_hero.jump)
                 {
@@ -1905,6 +2550,34 @@ class DizzyOmega:MainGameObject
                         done_dialogs["Martian_Chemist_Hello"] = true;
                         state = STATE.MARTIAN_CHEMIST_HELLO;
                         break switch_label;
+                    }
+                }
+
+                // Location : Cave with grasshopper
+                if (ground_cave.frame >= 0 &&
+                    !grasshopper.killed &&
+                    grasshopper.y < 62.4 &&
+                    abs(grasshopper.x-30.3) < 2.0 &&
+                    abs(the_hero.x-30.3) < 3.0 &&
+                    abs(the_hero.y-62.7) < 0.5 && !the_hero.jump)
+                {
+                    foreach(i, ref item; items)
+                    {
+                        if (item.model == "grasshopper-0")
+                        {
+                            if (inventory.length >= max_items)
+                            {
+                                state = STATE.TOO_MANY_ITEMS;
+                                break switch_label;
+                            }
+                            
+                            state = STATE.DIZZY_CATCH_GRASSHOPPER_MESSAGE;
+                            inventory ~= i;
+                            item.inventory = true;
+                            item.used = false;                                    
+                            grasshopper.kill();
+                            break switch_label;
+                        }
                     }
                 }
 
@@ -1971,6 +2644,22 @@ class DizzyOmega:MainGameObject
                     {
                         done_dialogs["Martian_Engineer_Takes_Bucket"] = true;
                         state = STATE.MARTIAN_ENGINEER_TAKES_BUCKET;
+                        //inventory[inv_num] -= 2;
+                        bucket_of_ice.inventory = false;
+                        bucket_of_ice.used = true;
+                        //bucket.inventory = true;
+                        //bucket.used = false;
+                        inventory = inventory[0..inv_num] ~ inventory[inv_num+1..$];
+                        
+                        break switch_label;
+                    }
+
+                    if (items[inventory[inv_num]].model == "bucket-of-ice" &&
+                        "Martian_Engineer_Returns_Player" in done_dialogs &&
+                        abs(the_hero.x-402.0) < 2.6 && abs(the_hero.y-2.7) < 0.5 && !the_hero.jump)
+                    {
+                        done_dialogs["Martian_Engineer_Takes_Bucket"] = true;
+                        state = STATE.MARTIAN_ENGINEER_TAKES_BUCKET;
                         inventory[inv_num] -= 2;
                         bucket_of_ice.inventory = false;
                         bucket_of_ice.used = true;
@@ -1979,6 +2668,165 @@ class DizzyOmega:MainGameObject
                         
                         break switch_label;
                     }
+
+                    // Location: Martian-Chemist
+                    if (items[inventory[inv_num]].model == "grasshoppers-poison" &&
+                        abs(the_hero.x-463.2) < 2.6 && abs(the_hero.y-1.7) < 0.5 && !the_hero.jump)
+                    {
+                        if (!grasshopper_item.inventory ||
+                            !bird_item.inventory)
+                        {
+                            state = STATE.MARTIAN_CHEMIST_NO_GRASSHOPPER;
+                            break switch_label;
+                        }
+                    }
+                    if (items[inventory[inv_num]].model == "grasshopper-0" &&
+                        abs(the_hero.x-463.2) < 2.6 && abs(the_hero.y-1.7) < 0.5 && !the_hero.jump)
+                    {
+                        if (!grasshoppers_poison.inventory ||
+                            !bird_item.inventory)
+                        {
+                            state = STATE.MARTIAN_CHEMIST_NO_BIRD;
+                            break switch_label;
+                        }
+                    }
+                    if (items[inventory[inv_num]].model == "bird-item" &&
+                        abs(the_hero.x-463.2) < 2.6 && abs(the_hero.y-1.7) < 0.5 && !the_hero.jump)
+                    {
+                        if (!grasshoppers_poison.inventory ||
+                            !grasshopper_item.inventory)
+                        {
+                            state = STATE.MARTIAN_CHEMIST_NO_GRASSHOPPERS_POISON;
+                            break switch_label;
+                        }
+                    }
+                    if ((items[inventory[inv_num]].model == "grasshoppers-poison" ||
+                         items[inventory[inv_num]].model == "grasshopper-0" ||
+                         items[inventory[inv_num]].model == "bird-item") &&
+                        abs(the_hero.x-463.2) < 2.6 && abs(the_hero.y-1.7) < 0.5 && !the_hero.jump)
+                    {
+                        if (grasshoppers_poison.inventory &&
+                            grasshopper_item.inventory &&
+                            bird_item.inventory)
+                        {
+                            grasshoppers_poison.used = true;
+                            grasshopper_item.used = true;
+                            bird_item.used = true;
+
+                            size_t[] new_inv;
+                            foreach (inv; inventory)
+                            {
+                                if (items[inv].model != "grasshoppers-poison" &&
+                                    items[inv].model != "grasshopper-0" &&
+                                    items[inv].model != "bird-item")
+                                {
+                                    new_inv ~= inv;
+                                }
+                            }
+                            inventory = new_inv;
+                            
+                            if (!bugs_poison.used)
+                                state = STATE.MARTIAN_CHEMIST_THANK_YOU;
+                            else
+                                state = STATE.MARTIAN_CHEMIST_NEED_WATER_FROM_LIGHT_TREE_CAVE;
+                            break switch_label;
+                        }
+                    }
+
+                    // Location: Martian-Chemist
+                    if (items[inventory[inv_num]].model == "bugs-poison" &&
+                        abs(the_hero.x-463.2) < 2.6 && abs(the_hero.y-1.7) < 0.5 && !the_hero.jump)
+                    {
+                        if (!bug_item.inventory ||
+                            !fish_item.inventory ||
+                            !squid_item.inventory)
+                        {
+                            state = STATE.MARTIAN_CHEMIST_NO_BUG;
+                            break switch_label;
+                        }
+                    }
+                    if (items[inventory[inv_num]].model == "bug" &&
+                        abs(the_hero.x-463.2) < 2.6 && abs(the_hero.y-1.7) < 0.5 && !the_hero.jump)
+                    {
+                        if (!bugs_poison.inventory ||
+                            !fish_item.inventory ||
+                            !squid_item.inventory)
+                        {
+                            state = STATE.MARTIAN_CHEMIST_NO_FISH;
+                            break switch_label;
+                        }
+                    }
+                    if (items[inventory[inv_num]].model == "fish-item" &&
+                        abs(the_hero.x-463.2) < 2.6 && abs(the_hero.y-1.7) < 0.5 && !the_hero.jump)
+                    {
+                        if (!bugs_poison.inventory ||
+                            !bug_item.inventory ||
+                            !squid_item.inventory)
+                        {
+                            state = STATE.MARTIAN_CHEMIST_NO_SQUID;
+                            break switch_label;
+                        }
+                    }
+                    if (items[inventory[inv_num]].model == "squid-item" &&
+                        abs(the_hero.x-463.2) < 2.6 && abs(the_hero.y-1.7) < 0.5 && !the_hero.jump)
+                    {
+                        if (!bugs_poison.inventory ||
+                            !bug_item.inventory ||
+                            !fish_item.inventory)
+                        {
+                            state = STATE.MARTIAN_CHEMIST_NO_BUGS_POISON;
+                            break switch_label;
+                        }
+                    }
+                    if ((items[inventory[inv_num]].model == "bugs-poison" ||
+                         items[inventory[inv_num]].model == "bug" ||
+                         items[inventory[inv_num]].model == "fish-item" ||
+                         items[inventory[inv_num]].model == "squid-item") &&
+                        abs(the_hero.x-463.2) < 2.6 && abs(the_hero.y-1.7) < 0.5 && !the_hero.jump)
+                    {
+                        if (bugs_poison.inventory &&
+                            bug_item.inventory &&
+                            fish_item.inventory &&
+                            squid_item.inventory)
+                        {
+                            bugs_poison.used = true;
+                            bug_item.used = true;
+                            fish_item.used = true;
+                            squid_item.used = true;
+
+                            size_t[] new_inv;
+                            foreach (inv; inventory)
+                            {
+                                if (items[inv].model != "bugs-poison" &&
+                                    items[inv].model != "bug" &&
+                                    items[inv].model != "fish-item" &&
+                                    items[inv].model != "squid-item")
+                                {
+                                    new_inv ~= inv;
+                                }
+                            }
+                            inventory = new_inv;
+                            
+                            if (!grasshoppers_poison.used)
+                                state = STATE.MARTIAN_CHEMIST_THANK_YOU;
+                            else
+                                state = STATE.MARTIAN_CHEMIST_NEED_WATER_FROM_LIGHT_TREE_CAVE;
+                            break switch_label;
+                        }
+                    }
+
+                    // Location: Martian-Chemist
+                    if (items[inventory[inv_num]].model == "bucket-with-light-water" &&
+                        abs(the_hero.x-463.2) < 2.6 && abs(the_hero.y-1.7) < 0.5 && !the_hero.jump)
+                    {
+                        state = STATE.MARTIAN_CHEMIST_GIVES_PSYCHOTROPIC_SPRAY;
+                        inventory = inventory[0..inv_num] ~ inventory[inv_num+1..$];
+                        bucket_with_light_water.inventory = false;
+                        bucket_with_light_water.used = true;
+                        
+                        break switch_label;
+                    }
+
 
                     // Location : Danger sign in the muzzle of volcano
                     if (items[inventory[inv_num]].model == "rope" &&
@@ -1997,6 +2845,19 @@ class DizzyOmega:MainGameObject
                     if (items[inventory[inv_num]].model == "rope" &&
                         abs(the_hero.x-245.0) < 1.5 &&
                         abs(the_hero.y-2.0) < 0.5 && !the_hero.jump)
+                    {
+                        state = STATE.DIZZY_TIED_ROPE_MESSAGE;
+                        inventory = inventory[0..inv_num] ~ inventory[inv_num+1..$];
+                        rope.inventory = false;
+                        rope.used = true;
+                        
+                        break switch_label;
+                    }
+
+                    // Location : Danger sign underground
+                    if (items[inventory[inv_num]].model == "rope" &&
+                        abs(the_hero.x-331.2) < 1.5 &&
+                        abs(the_hero.y+14.0) < 0.5 && !the_hero.jump)
                     {
                         state = STATE.DIZZY_TIED_ROPE_MESSAGE;
                         inventory = inventory[0..inv_num] ~ inventory[inv_num+1..$];
@@ -2060,7 +2921,7 @@ class DizzyOmega:MainGameObject
                         bucket_covered.used = true;
                         blanket.inventory = true;
                         blanket.used = false;
-                        inventory[inv_num]++;
+                        inventory[inv_num] += 3;
                         dizzy_water_flowers_state = 1;
                         the_hero.water_with_bucket_of_water();
                         break switch_label;
@@ -2078,14 +2939,7 @@ class DizzyOmega:MainGameObject
                         break switch_label;
                     }
 
-                    if (dizzy_water_flowers_state < 1 &&
-                        items[inventory[inv_num]].model == "blanket" &&
-                        bucket_of_water.inventory)
-                    {
-                        state = STATE.DIZZY_COVERED_BUCKET_MESSAGE;
-                        break switch_label;
-                    }
-
+                    // Location : Cave of light tree
                     if (items[inventory[inv_num]].model == "branch" &&
                         "Martian_Engineer_Takes_Bucket" in done_dialogs &&
                         abs(the_hero.x-12.3) < 1.5 &&
@@ -2097,6 +2951,253 @@ class DizzyOmega:MainGameObject
                         light_branch.inventory = true;
                         light_branch.used = false;
                         inventory[inv_num]++;
+                        break switch_label;
+                    }
+                    if (items[inventory[inv_num]].model == "bucket" &&
+                        "Martian_Engineer_Returns_Bucket" in done_dialogs &&
+                        abs(the_hero.x-12.3) < 1.5 &&
+                        abs(the_hero.y+7.3) < 0.5 && !the_hero.jump)
+                    {
+                        state = STATE.DIZZY_TRIES_TO_GET_WATER;
+                        break switch_label;
+                    }
+                    if (items[inventory[inv_num]].model == "bucket-with-ground" &&
+                        "Martian_Engineer_Returns_Bucket" in done_dialogs &&
+                        abs(the_hero.x-12.3) < 1.5 &&
+                        abs(the_hero.y+7.3) < 0.5 && !the_hero.jump)
+                    {
+                        state = STATE.DIZZY_GET_LIGHT_WATER;
+                        foreach(i, ref item; items)
+                        {
+                            if (item.model == "bucket-with-light-water")
+                            {
+                                items[inventory[inv_num]].inventory = false;
+                                items[inventory[inv_num]].used = true;
+                                inventory[inv_num] = i;
+                                item.inventory = true;
+                                break;
+                            }
+                        }
+                        break switch_label;
+                    }
+
+                    // Location : Door in the cave of light tree
+                    if (items[inventory[inv_num]].model == "key" &&
+                        abs(the_hero.x-16.8) < 1.5 &&
+                        abs(the_hero.y-0.6) < 0.5 && !the_hero.jump)
+                    {
+                        state = STATE.DIZZY_OPEN_DOOR;
+                        key.inventory = false;
+                        key.used = true;
+                        inventory = inventory[0..inv_num] ~ inventory[inv_num+1..$];
+                        door.y += 17.0f;
+                        break switch_label;
+                    }
+
+                    // Location : Cave with grasshopper
+                    if (ground_cave.frame < 0 &&
+                        items[inventory[inv_num]].model == "spade" &&
+                        abs(the_hero.x-30.3) < 3.0 &&
+                        abs(the_hero.y-62.7) < 0.5 && !the_hero.jump)
+                    {
+                        state = STATE.DIZZY_DIG2_MESSAGE;
+                        break switch_label;
+                    }
+                    if (items[inventory[inv_num]].model == "bucket" &&
+                        "Martian_Engineer_Returns_Bucket" in done_dialogs &&
+                        abs(the_hero.x-30.3) < 1.5 &&
+                        abs(the_hero.y-62.7) < 0.5 && !the_hero.jump)
+                    {
+                        state = STATE.DIZZY_PUT_GROUND_TO_THE_BUCKET;
+                        foreach(i, ref item; items)
+                        {
+                            if (item.model == "bucket-with-ground")
+                            {
+                                items[inventory[inv_num]].inventory = false;
+                                items[inventory[inv_num]].used = true;
+                                inventory[inv_num] = i;
+                                item.inventory = true;
+                                break;
+                            }
+                        }
+                        break switch_label;
+                    }
+
+                    // Location : The Castle, near Zaks
+                    if (ground_castle.frame < 0 &&
+                        items[inventory[inv_num]].model == "spade" &&
+                        abs(the_hero.x-476.0) < 3.0 &&
+                        abs(the_hero.y+159.0) < 0.5 && !the_hero.jump)
+                    {
+                        state = STATE.DIZZY_DIG3_MESSAGE;
+                        break switch_label;
+                    }
+
+                    // Location : The Castle, near Zaks, in the shelter
+                    if (ground_castle.frame >= 0 &&
+                        items[inventory[inv_num]].model == "whistle" &&
+                        abs(the_hero.x-473.9) < 3.0 &&
+                        abs(the_hero.y+159.5) < 0.5 && !the_hero.jump)
+                    {
+                        if (!all_items_in_the_castle())
+                        {
+                            state = STATE.NOT_ALL_ITEMS_IN_THE_CASTLE_MESSAGE;
+                            break switch_label;
+                        }
+                        else if (!rope.in_the_castle())
+                        {
+                            state = STATE.ROPE_NOT_IN_THE_CASTLE_MESSAGE;
+                            break switch_label;
+                        }
+                        else
+                        {
+                            state = STATE.DIZZY_WHISTLE_MESSAGE;
+                            inventory = inventory[0..inv_num] ~ inventory[inv_num+1..$];
+                            whistle.inventory = false;
+                            whistle.used = true;
+                            break switch_label;
+                        }
+                    }
+
+                    // Location : The bug place
+                    if ((items[inventory[inv_num]].model == "stone1" ||
+                        items[inventory[inv_num]].model == "stone2") &&
+                        abs(the_hero.x-242.6) < 3.0 &&
+                        abs(the_hero.y+5.0) < 0.5 && !the_hero.jump)
+                    {
+                        ground_cave.frame = root.frame;
+                        state = STATE.DIZZY_PUT_STONE_MESSAGE;
+
+                        if ( !stone1.inventory && abs(stone1.x - 242.6) < 0.1 && abs(stone1.y + 5.2) < 0.1 ||
+                             !stone2.inventory && abs(stone2.x - 242.6) < 0.1 && abs(stone2.y + 5.2) < 0.1 )
+                        {
+                            items[inventory[inv_num]].inventory = false;
+                            items[inventory[inv_num]].x = 242.6;
+                            items[inventory[inv_num]].y = -4.4;
+                            items[inventory[inv_num]].z = the_hero.z;
+                            inventory = inventory[0..inv_num]~ inventory[inv_num+1..$];
+                        }
+                        else
+                        {
+                            items[inventory[inv_num]].inventory = false;
+                            items[inventory[inv_num]].x = 242.6;
+                            items[inventory[inv_num]].y = -5.2;
+                            items[inventory[inv_num]].z = the_hero.z;
+                            inventory = inventory[0..inv_num]~ inventory[inv_num+1..$];
+                        }
+
+                        break switch_label;
+                    }
+
+                    // Location : Lair of shallow habitats
+                    if (items[inventory[inv_num]].model == "fish-rod" &&
+                        bug_item.inventory &&
+                        abs(the_hero.x-371.5) < 1.5 &&
+                        abs(the_hero.y+104.8) < 0.5 && !the_hero.jump)
+                    {
+                        state = STATE.DIZZY_CATCH_FISH_MESSAGE;
+                        
+                        foreach(i, ref item; items)
+                        {
+                            if (item.model == "fish-item")
+                            {
+                                items[inventory[inv_num]].inventory = false;
+                                items[inventory[inv_num]].used = true;
+                                inventory[inv_num] = i;
+                                item.inventory = true;
+                                fish.hide();
+                                break;
+                            }
+                        }
+                        
+                        break switch_label;
+                    }
+
+                    // Location : Lair of deep-sea dweller
+                    if (items[inventory[inv_num]].model == "short-rope" &&
+                        fish_item.inventory &&
+                        abs(the_hero.x-274.0) < 4.0 &&
+                        abs(the_hero.y+122.0) < 6.0)
+                    {
+                        state = STATE.DIZZY_CATCH_SQUID_MESSAGE;
+                        
+                        foreach(i, ref item; items)
+                        {
+                            if (item.model == "squid-item")
+                            {
+                                items[inventory[inv_num]].inventory = false;
+                                items[inventory[inv_num]].used = true;
+                                inventory[inv_num] = i;
+                                item.inventory = true;
+                                squid.hide();
+                                break;
+                            }
+                        }
+                        
+                        break switch_label;
+                    }
+
+                    // Location: Near bug
+                    if (items[inventory[inv_num]].model == "nettle" &&
+                        abs(the_hero.x-bug.x) < 3.0 &&
+                        abs(the_hero.y-bug.y) < 0.5 && !the_hero.jump)
+                    {
+                        if ( (!stone1.inventory && abs(stone1.x - 242.6) < 0.1 && abs(stone1.y + 4.4) < 0.1 ||
+                              !stone2.inventory && abs(stone2.x - 242.6) < 0.1 && abs(stone2.y + 4.4) < 0.1) &&
+                              bug.x < 242.6 )
+                        {
+                            state = STATE.DIZZY_CATCH_BUG_MESSAGE;
+
+                            foreach(i, ref item; items)
+                            {
+                                if (item.model == "bug")
+                                {
+                                    items[inventory[inv_num]].inventory = false;
+                                    items[inventory[inv_num]].used = true;
+                                    inventory[inv_num] = i;
+                                    item.inventory = true;
+                                    bug.kill();
+                                    break;
+                                }
+                            }
+                        }
+                        else
+                        {
+                            state = STATE.DIZZY_TRY_CATCH_BUG_MESSAGE;
+                        }
+                        
+                        break switch_label;
+                    }
+
+                    // Location: Near bug
+                    if (items[inventory[inv_num]].model == "psychotropic-spray" &&
+                        !bug.sprayed &&
+                        abs(the_hero.x-bug.x) < 3.0 &&
+                        abs(the_hero.y-bug.y) < 0.5 && !the_hero.jump)
+                    {
+                        state = STATE.DIZZY_SPRAYED_BUG_MESSAGE;
+                        bug.spray();
+                        
+                        break switch_label;
+                    }
+
+                    // Location: Near grasshopper
+                    if (items[inventory[inv_num]].model == "psychotropic-spray" &&
+                        !grasshopper.sprayed &&
+                        abs(the_hero.x-grasshopper.x) < 3.0 &&
+                        abs(the_hero.y-grasshopper.y) < 0.5 && !the_hero.jump)
+                    {
+                        state = STATE.DIZZY_SPRAYED_GRASSHOPPER_MESSAGE;
+                        grasshopper.spray();
+                        
+                        break switch_label;
+                    }
+                    
+                    if (dizzy_water_flowers_state < 1 &&
+                        items[inventory[inv_num]].model == "blanket" &&
+                        bucket_of_water.inventory)
+                    {
+                        state = STATE.DIZZY_COVERED_BUCKET_MESSAGE;
                         break switch_label;
                     }
                     
@@ -2116,6 +3217,31 @@ class DizzyOmega:MainGameObject
             case STATE.MARTIAN_AGRONOMIST_THANKS:
             case STATE.MARTIAN_ENGINEER_TAKES_BUCKET1:
             case STATE.DIZZY_HOLD_BRANCH_UNDER_DROP:
+            case STATE.DIZZY_OPEN_DOOR:
+            case STATE.BAG_FOUND:
+            case STATE.DIZZY_CATCH_GRASSHOPPER_MESSAGE:
+            case STATE.MARTIAN_CHEMIST_NO_GRASSHOPPER:
+            case STATE.MARTIAN_CHEMIST_NO_BIRD:
+            case STATE.MARTIAN_CHEMIST_NO_GRASSHOPPERS_POISON:
+            case STATE.MARTIAN_CHEMIST_NO_BUG:
+            case STATE.MARTIAN_CHEMIST_NO_FISH:
+            case STATE.MARTIAN_CHEMIST_NO_SQUID:
+            case STATE.MARTIAN_CHEMIST_NO_BUGS_POISON:
+            case STATE.MARTIAN_CHEMIST_THANK_YOU:
+            case STATE.MARTIAN_CHEMIST_NEED_WATER_FROM_LIGHT_TREE_CAVE:
+            case STATE.DIZZY_PUT_STONE_MESSAGE:
+            case STATE.DIZZY_TRY_CATCH_BUG_MESSAGE:
+            case STATE.DIZZY_CATCH_BUG_MESSAGE:
+            case STATE.DIZZY_UNTIED_SHORT_ROPE_MESSAGE:
+            case STATE.DIZZY_CATCH_FISH_MESSAGE:
+            case STATE.DIZZY_CATCH_SQUID_MESSAGE:
+            case STATE.DIZZY_TRIES_TO_GET_WATER:
+            case STATE.DIZZY_PUT_GROUND_TO_THE_BUCKET:
+            case STATE.DIZZY_GET_LIGHT_WATER:
+            case STATE.DIZZY_SPRAYED_BUG_MESSAGE:
+            case STATE.DIZZY_SPRAYED_GRASSHOPPER_MESSAGE:
+            case STATE.NOT_ALL_ITEMS_IN_THE_CASTLE_MESSAGE:
+            case STATE.ROPE_NOT_IN_THE_CASTLE_MESSAGE:
             case STATE.TO_BE_CONTINUED_MESSAGE:
                 state = STATE.NO_DIALOGS;
                 break;
@@ -2126,6 +3252,8 @@ class DizzyOmega:MainGameObject
             case STATE.BURNED_IN_LAVA:
             case STATE.DAMAGED_BY_PIN:
             case STATE.HIT_BY_ROCK:
+            case STATE.BURNED_IN_FLAME:
+            case STATE.CRUSHED_BY_PRESSURE:
                 if ( abs(scrx-420.0) < 1.0 &&
                      (abs(scry+17.0) < 1.0 || abs(scry-0.0) < 1.0) )
                 {
@@ -2170,15 +3298,32 @@ class DizzyOmega:MainGameObject
             case STATE.MARTIAN_ENGINEER_RETURNS_PLAYER1:
             case STATE.MARTIAN_ENGINEER_TAKES_BUCKET:
             case STATE.DIZZY_DIG_MESSAGE:
+            case STATE.ZAKS_SAYS_FAREWELL_WORD:
+                state++;
+                break;
+            case STATE.DIZZY_WHISTLE_MESSAGE:
+                things_sweep_away_zaks.unhide();
+                state++;
+                break;
+            case STATE.THINGS_SWEEP_AWAY_ZAKS_ANIM:
+                things_sweep_away_zaks.hide();
+                stones.frame = frame;
+                stones.tick(gs);
+                stone3.x = 413.4;
+                stone3.y = -84.3;
                 state++;
                 break;
             case STATE.LOOKING_BOOTH_MESSAGE:
                 state = STATE.LOOKING_BOOTH;
                 scry += 68.0;
+                sl_tid.send(cast(int) round(scrx/30.0),
+                    cast(int) round(scry/17.0));
                 break;
             case STATE.LOOKING_BOOTH:
                 scry -= 68.0;
                 state = STATE.NO_DIALOGS;
+                sl_tid.send(cast(int) round(scrx/30.0),
+                    cast(int) round(scry/17.0));
                 break;
             case STATE.DIZZY_USED_KNIFE_ANIM:
                 dizzy_used_knife_quest_state = 2;
@@ -2191,6 +3336,15 @@ class DizzyOmega:MainGameObject
             case STATE.DIZZY_CUTS_ROPE_ANIM:
             case STATE.DIZZY_DIG_ANIM:
             case STATE.HELP:
+                break;
+            case STATE.DIZZY_DIG2_MESSAGE:
+                ground_cave.frame = frame;
+                grasshopper.change_solid(true);
+                state = STATE.NO_DIALOGS;
+                break;
+            case STATE.DIZZY_DIG3_MESSAGE:
+                ground_castle.frame = frame;
+                state = STATE.NO_DIALOGS;
                 break;
             case STATE.MARTIAN_ENGINEER_GET_AWAY:
                 if (player.x == player.def_x &&
@@ -2232,6 +3386,21 @@ class DizzyOmega:MainGameObject
                     rope_state = 2;
                     rope2.reinit();
                 }
+
+                if (abs(scrx - 330.0) < 1.0 &&
+                    abs(scry + 17.0) < 1.0)
+                {
+                    if (pressprot.x == pressprot.def_x &&
+                        pressprot.y == pressprot.def_y)
+                    {
+                        pressprot.x = 465.9;
+                        pressprot.y = -6.2;
+                    }
+
+                    rope_state = 3;
+                    rope3.reinit();
+                }
+                
                 state = STATE.NO_DIALOGS;
                 break;
 
@@ -2358,6 +3527,56 @@ class DizzyOmega:MainGameObject
                 
                 state = STATE.NO_DIALOGS;
                 break;
+
+            case STATE.MARTIAN_ENGINEER_GIVES_WHISTLE:
+                whistle.used = false;
+                whistle.x = the_hero.x - 2.0;
+                whistle.y = the_hero.y;
+                whistle.z = the_hero.z;
+                
+                state = STATE.NO_DIALOGS;
+                break;
+
+            case STATE.MARTIAN_ENGINEER_RETURNS_BUCKET:
+                bucket.used = false;
+                bucket.x = the_hero.x - 2.0;
+                bucket.y = the_hero.y;
+                bucket.z = the_hero.z;
+                
+                state = STATE.NO_DIALOGS;
+                break;
+
+            case STATE.MARTIAN_CHEMIST_GIVES_PSYCHOTROPIC_SPRAY:
+                psychotropic_spray.used = false;
+                psychotropic_spray.x = the_hero.x - 2.0;
+                psychotropic_spray.y = the_hero.y;
+                psychotropic_spray.z = the_hero.z;
+
+                bucket.used = false;
+                bucket.x = the_hero.x - 4.0;
+                bucket.y = the_hero.y;
+                bucket.z = the_hero.z;
+
+                bug.killed = false;
+                grasshopper.killed = false;
+                grasshopper.change_solid(false);
+
+                track = 4;
+                music_start_tick = cast(long)SDL_GetTicks();
+                play_music();
+                
+                state = STATE.NO_DIALOGS;
+                break;
+
+            case STATE.STONES_CRASHES_MESSAGE:
+                zaks.y -= 17.0;
+                
+                track = 0;
+                music_start_tick = cast(long)SDL_GetTicks();
+                play_music();
+                
+                state = STATE.NO_DIALOGS;
+                break;
         }
     }
 
@@ -2375,6 +3594,24 @@ class DizzyOmega:MainGameObject
             lang = s["lang"].to!(LANG);
         else
             lang = LANG.EN;
+
+        if ("track" in s)
+        {
+            int tr = s["track"].to!(int);
+            if (track != tr)
+            {
+                track = tr;
+                play_music();
+            }
+        }
+        else
+        {
+            if (track != 0)
+            {
+                track = 0;
+                play_music();
+            }
+        }   
         
         num_stars = 0;
         foreach(star; stars)
@@ -2392,6 +3629,8 @@ class DizzyOmega:MainGameObject
                 inventory ~= i;
         }
 
+        max_items = (bag.used ? 5 : 3);
+
         foreach(animation; animations)
             animation.load(s);
 
@@ -2407,7 +3646,8 @@ class DizzyOmega:MainGameObject
                     "Martian_Agronomist_Thanks",
                     "Martian_Engineer_Returns_Player",
                     "Martian_Engineer_Takes_Bucket",
-                    "Martian_Engineer_Gives_Spade"])
+                    "Martian_Engineer_Gives_Spade",
+                    "Martian_Engineer_Returns_Bucket",])
         {
             if ("dialog"~d in s)
             {
@@ -2462,6 +3702,11 @@ class DizzyOmega:MainGameObject
             wait_meteorite = 2;
         else
             wait_meteorite = -1;
+
+        if (bird.fly == 2)
+            wait_meteorite2 = 2;
+        else
+            wait_meteorite2 = -1;
     }
 
     void save(ref string[string] s)
@@ -2486,7 +3731,8 @@ class DizzyOmega:MainGameObject
                     "Martian_Agronomist_Thanks",
                     "Martian_Engineer_Returns_Player",
                     "Martian_Engineer_Takes_Bucket",
-                    "Martian_Engineer_Gives_Spade"])
+                    "Martian_Engineer_Gives_Spade",
+                    "Martian_Engineer_Returns_Bucket",])
         {
             if (d in done_dialogs)
             {
@@ -2512,6 +3758,7 @@ class DizzyOmega:MainGameObject
 
         s["frame"] = frame.to!(string);
         s["lang"] = lang.to!(string);
+        s["track"] = track.to!(string);
     }
 
     void restart(GlobalState gs)
@@ -2566,12 +3813,11 @@ class DizzyOmega:MainGameObject
         else if (state == STATE.NO_DIALOGS) state = STATE.HELP;
     }
 
-    void turn_music(GlobalState gs)
+    void play_music()
     {
-        music = !music;
         if (music)
         {
-            if (Mix_PlayMusic(music1, -1) == -1)
+            if (Mix_PlayMusic(musics[track], -1) == -1)
             {
                 writefln("Mix_PlayMusic: %s",
                     Mix_GetError().to!(string)());
@@ -2579,15 +3825,23 @@ class DizzyOmega:MainGameObject
     
             if(Mix_SetMusicPosition((
                 (SDL_GetTicks() - music_start_tick)/1000.0)%
-                music1_len) == -1) {
+                music_len[track]) == -1) {
                 writefln("Mix_SetMusicPosition: %s\n",
                     Mix_GetError().to!(string)());
             }
+            
+            print_message(TEMP_MESSAGES.PLAYS, " "~music_name[track]);
         }
         else
         {
             Mix_HaltMusic();
         }
+    }
+
+    void turn_music(GlobalState gs)
+    {
+        music = !music;
+        play_music();
     }
 
     void turn_sounds(GlobalState gs)
@@ -2640,7 +3894,7 @@ class DizzyOmega:MainGameObject
         
         gs.keybar.handlers_down[SDL_SCANCODE_C] = KeyHandler(&print_coords, ("Print Coords"), "Coords");
         gs.keybar.handlers_down[SDL_SCANCODE_S] = KeyHandler(&switch_slow, ("Switch Slow"), "Slow");
-        //gs.keybar.handlers_down[SDL_SCANCODE_E] = KeyHandler(&switch_sensors, ("Show Sensors"), "Sensors");
+        gs.keybar.handlers_down[SDL_SCANCODE_E] = KeyHandler(&switch_sensors, ("Show Sensors"), "Sensors");
         gs.keybar.handlers_down[SDL_SCANCODE_U] = KeyHandler(&turn_music, ("On/Off Music"), "Music");
         gs.keybar.handlers_down[SDL_SCANCODE_O] = KeyHandler(&turn_sounds, ("On/Off Sounds"), "Sounds");
 

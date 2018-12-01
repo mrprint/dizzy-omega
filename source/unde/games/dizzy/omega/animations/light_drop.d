@@ -1,6 +1,7 @@
 module unde.games.dizzy.omega.animations.light_drop;
 
 import derelict.opengl3.gl;
+import std.math;
 import unde.games.object;
 import unde.games.renderer;
 import unde.global_state;
@@ -15,6 +16,9 @@ class LightDrop:StaticGameObject
 
     override void draw(GlobalState gs)
     {
+        if (abs(root.scrx-0.0) > 16.0 ||
+            abs(root.scry-0.0) > 9.0) return;
+            
         float f = root.frame%500;   
 
         glPushMatrix();

@@ -29,8 +29,10 @@ class Item:StaticGameObject
 
     bool maybe_taken(GlobalState gs, StaticGameObject the_hero)
     {
+        float width = 2.5;
+        if (model == "stone-1" || model == "stone-2") width = 2.0;
         return !inventory && !used &&
-                the_hero.x-1.5 <= x && x <= the_hero.x+1.5 &&
+                the_hero.x-width <= x && x <= the_hero.x+width &&
                 the_hero.y <= y+1.0 && y+1.0 <= the_hero.y+2.5 &&
                 the_hero.z-1.0 <= z && z <= the_hero.z+1.0;
     }

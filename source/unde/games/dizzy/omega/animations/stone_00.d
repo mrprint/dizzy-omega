@@ -2,6 +2,7 @@ module unde.games.dizzy.omega.animations.stone_00;
 
 import derelict.opengl3.gl;
 import std.conv;
+import std.math;
 import unde.games.collision_detector;
 import unde.games.object;
 import unde.games.renderer;
@@ -23,7 +24,10 @@ class Stone00:StaticGameObject
 
     override void draw(GlobalState gs)
     {
-        float f = 0.0;   
+        if (abs(root.scrx-0.0) > 16.0 ||
+            abs(root.scry-0.0) > 9.0) return;
+        
+        float f = 0.0;
         if (frame >= 0)
         {
             f = root.frame - frame;

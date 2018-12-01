@@ -19,7 +19,7 @@ import unde.games.obj_loader;
 private GLuint[string] textures;
 
 /* ---------------------------------------------------------------------------- */
-bool apply_material(GlobalState gs, const (MtlMaterial) *mtl, 
+bool apply_material(GlobalState gs, shared MtlMaterial *mtl, 
     string delegate(GlobalState gs, string name) tex_anim = null)
 {
     float[4] c;
@@ -115,17 +115,38 @@ bool apply_material(GlobalState gs, const (MtlMaterial) *mtl,
     return false;
 }
 
-GLuint[const (ObjMesh)*] gl_lists;
+GLuint[shared ObjMesh*] gl_lists;
+
+import core.runtime;
+Throwable.TraceInfo getStackTrace() {
+
+    version(Posix) {
+        // druntime cuts out the first few functions on the trace as they are internal
+        // so we'll make some dummy functions here so our actual info doesn't get cut
+        Throwable.TraceInfo f5() { return defaultTraceHandler(); }
+        Throwable.TraceInfo f4() { return f5(); }
+        Throwable.TraceInfo f3() { return f4(); }
+        Throwable.TraceInfo f2() { return f3(); }
+        auto stuff = f2();
+    } else {
+        auto stuff = defaultTraceHandler();
+    }
+
+    return stuff;
+}
+
 
 /* ---------------------------------------------------------------------------- */
-void recursive_render (GlobalState gs, const (ObjFile) *sc,
+void recursive_render (GlobalState gs, shared ObjFile *sc,
     bool delegate(GlobalState gs, string name) anim = null,
     string delegate(GlobalState gs, string name) tex_anim = null,
     bool dontcache = false, bool reverse = false)
 {
+    //writefln("%s", getStackTrace());
+    
     foreach(i; 0..sc.objects.length)
     {
-        const(ObjObject) *object;
+        shared ObjObject *object;
         if (!reverse) object = sc.objects[i];
         else object = sc.objects[sc.objects.length-1-i];
 

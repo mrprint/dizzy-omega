@@ -2,6 +2,7 @@ module unde.games.dizzy.omega.animations.stone_02;
 
 import derelict.opengl3.gl;
 import std.conv;
+import std.math;
 import std.stdio;
 import unde.games.object;
 import unde.games.renderer;
@@ -22,6 +23,9 @@ class Stone02:StaticGameObject
 
     override void draw(GlobalState gs)
     {
+        if (abs(root.scrx+30.0) > 16.0 ||
+            abs(root.scry-0.0) > 9.0) return;
+            
         float f = 0.0;   
         if (frame >= 0.0)
         {
