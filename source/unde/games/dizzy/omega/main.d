@@ -2640,6 +2640,7 @@ class DizzyOmega:MainGameObject
                     }
                     if (items[inventory[inv_num]].model == "bucket-of-ice" &&
                         "Martian_Engineer_Returns_Player" in done_dialogs &&
+                        "Martian_Engineer_Takes_Bucket" !in done_dialogs &&
                         abs(the_hero.x-402.0) < 2.6 && abs(the_hero.y-2.7) < 0.5 && !the_hero.jump)
                     {
                         done_dialogs["Martian_Engineer_Takes_Bucket"] = true;
@@ -3065,7 +3066,6 @@ class DizzyOmega:MainGameObject
                         abs(the_hero.x-242.6) < 3.0 &&
                         abs(the_hero.y+5.0) < 0.5 && !the_hero.jump)
                     {
-                        ground_cave.frame = root.frame;
                         state = STATE.DIZZY_PUT_STONE_MESSAGE;
 
                         if ( !stone1.inventory && abs(stone1.x - 242.6) < 0.1 && abs(stone1.y + 5.2) < 0.1 ||
